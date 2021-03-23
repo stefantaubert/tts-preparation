@@ -25,8 +25,6 @@ from tqdm import tqdm
 _T = TypeVar('_T')
 PYTORCH_EXT = ".pt"
 
-BASE_DIR_VAR = "base_dir"
-
 
 def parse_tuple_list(tuple_list: Optional[str] = None) -> Optional[List[Tuple]]:
   """ tuple_list: "a,b;c,d;... """
@@ -37,12 +35,6 @@ def parse_tuple_list(tuple_list: Optional[str] = None) -> Optional[List[Tuple]]:
   result: List[Tuple] = [tuple(x.split(',')) for x in step1]
   result = list(sorted(set(result)))
   return result
-
-
-def add_base_dir(parser: ArgumentParser):
-  assert BASE_DIR_VAR in os.environ.keys()
-  base_dir = os.environ[BASE_DIR_VAR]
-  parser.set_defaults(base_dir=base_dir)
 
 
 def split_hparams_string(hparams: Optional[str]) -> Optional[Dict[str, str]]:

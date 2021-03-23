@@ -1,14 +1,9 @@
 import os
 
 from text_utils import SymbolIdDict
-from tts_preparation.utils import get_subdir
 
 _symbols_json = "symbols.json"
 INFER_MAP_FN = "inference_map.json"
-
-
-def get_pre_dir(base_dir: str, create: bool = False):
-  return get_subdir(base_dir, 'pre', create)
 
 
 def load_text_symbol_converter(text_dir: str) -> SymbolIdDict:

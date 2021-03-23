@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 
 from text_utils import EngToIpaMode, Language
@@ -17,8 +18,15 @@ from tts_preparation.app.prepare2 import (app_add_greedy_kld_ngram_minutes,
                                           app_add_symbols, app_prepare,
                                           print_and_save_stats)
 from tts_preparation.core.data import DatasetType
-from tts_preparation.utils import (add_base_dir, parse_tuple_list,
-                                   split_int_set_str)
+from tts_preparation.utils import parse_tuple_list, split_int_set_str
+
+BASE_DIR_VAR = "base_dir"
+
+
+def add_base_dir(parser: ArgumentParser):
+  assert BASE_DIR_VAR in os.environ.keys()
+  base_dir = os.environ[BASE_DIR_VAR]
+  parser.set_defaults(base_dir=base_dir)
 
 
 def _add_parser_to(subparsers, name: str, init_method):
@@ -30,6 +38,7 @@ def _add_parser_to(subparsers, name: str, init_method):
 
 
 def init_merge_ds_parser(parser: ArgumentParser):
+  parser.add_argument('--sdp_dir', type=str, required=True)
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--ds_speakers', type=str, required=True)
   parser.add_argument('--ds_text_audio', type=str, required=True)

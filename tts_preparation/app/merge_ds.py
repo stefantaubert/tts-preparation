@@ -1,6 +1,6 @@
-from logging import getLogger
 import os
 import shutil
+from logging import getLogger
 from typing import List, Set, Tuple
 
 from speech_dataset_preprocessing import (get_ds_dir, get_mel_dir,
@@ -11,16 +11,10 @@ from speech_dataset_preprocessing import (get_ds_dir, get_mel_dir,
                                           load_text_symbol_converter,
                                           load_wav_csv)
 from text_utils import AccentsDict, SpeakersDict, SymbolIdDict
-from tts_preparation.app.io import get_pre_dir
 from tts_preparation.core.merge_ds import (DsDataset, DsDatasetList,
                                            MergedDataset, MergedDatasetEntry,
                                            filter_symbols, preprocess)
 from tts_preparation.utils import get_subdir
-
-
-def _get_merged_root_dir(base_dir: str, create: bool = False):
-  return get_subdir(get_pre_dir(base_dir, create), 'merged', create)
-
 
 _merge_data_csv = "data.csv"
 _merge_speakers_json = "speakers.json"
@@ -29,7 +23,7 @@ _merge_accents_json = "accents.json"
 
 
 def get_merged_dir(base_dir: str, merge_name: str, create: bool = False):
-  return get_subdir(_get_merged_root_dir(base_dir, create), merge_name, create)
+  return get_subdir(base_dir, merge_name, create)
 
 
 def load_merged_data(merge_dir: str) -> MergedDataset:
@@ -72,7 +66,7 @@ def save_merged_accents_ids(merge_dir: str, data: AccentsDict):
   data.save(path)
 
 
-def merge_ds(base_dir: str, merge_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]], delete_existing: bool = True):
+def merge_ds(base_dir: str, sdp_dir: str, merge_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]], delete_existing: bool = True):
   logger = getLogger(__name__)
   logger.info(f"Merging dataset: {merge_name}...")
   merge_dir = get_merged_dir(base_dir, merge_name)
@@ -85,7 +79,7 @@ def merge_ds(base_dir: str, merge_name: str, ds_speakers: List[Tuple[str, str]],
   for ds_name, text_name, audio_name in ds_text_audio:
     # multiple uses of one ds are not valid
 
-    ds_dir = get_ds_dir(base_dir, ds_name)
+    ds_dir = get_ds_dir(sdp_dir, ds_name)
     text_dir = get_text_dir(ds_dir, text_name)
     wav_dir = get_wav_dir(ds_dir, audio_name)
     mel_dir = get_mel_dir(ds_dir, audio_name)
