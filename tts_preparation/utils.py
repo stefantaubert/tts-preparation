@@ -314,7 +314,8 @@ class GenericList(list, Generic[_T]):
       return tqdm(self)
     return self
 
-  def get_random_entry(self) -> _T:
+  def get_random_entry(self, seed: int) -> _T:
+    random.seed(seed)
     idx = random.choice(range(len(self)))
     return self[idx]
 

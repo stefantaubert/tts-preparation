@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import Dict, List, Optional, Set
 
-from tts_preparation.utils import GenericList
 from tts_preparation.core.merge_ds import MergedDataset
+from tts_preparation.utils import GenericList
 
 
 @dataclass()
@@ -42,15 +42,16 @@ class PreparedDataList(GenericList[PreparedData]):
     res = {x.entry_id for x in self.items()}
     return res
 
-  def get_for_validation(self, entry_ids: Optional[Set[int]], speaker_id: Optional[int]) -> List[PreparedData]:
+  def get_for_validation(self, entry_ids: Optional[Set[int]], speaker_id: Optional[int], seed: Optional[int] = 1234) -> List[PreparedData]:
     if entry_ids is not None:
       entries = [x for x in self.items() if x.entry_id in entry_ids]
       return entries
 
     if speaker_id is not None:
-      return [self._get_random_entry_speaker_id(speaker_id)]
+      assert seed is not None
+      return [self._get_random_entry_speaker_id(speaker_id, seed)]
 
-    return [self.get_random_entry()]
+    return [self.get_random_entry(seed)]
 
   def _get_entry(self, entry_id: int) -> PreparedData:
     for entry in self.items():
@@ -58,9 +59,10 @@ class PreparedDataList(GenericList[PreparedData]):
         return entry
     raise Exception()
 
-  def _get_random_entry_speaker_id(self, speaker_id: int) -> PreparedData:
+  def _get_random_entry_speaker_id(self, speaker_id: int, seed: int) -> PreparedData:
     relevant_entries = [x for x in self.items() if x.speaker_id == speaker_id]
     assert len(relevant_entries) > 0
+    random.seed(seed)
     entry = random.choice(relevant_entries)
     return entry
 

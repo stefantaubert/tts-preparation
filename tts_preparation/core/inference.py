@@ -184,12 +184,12 @@ class InferSentenceList(GenericList[InferSentence]):
         assert len(sentence.symbols) == len(sentence.accents)
     return unknown_symbols_exist
 
-  def get_subset(self, sent_ids: Optional[Set[int]]) -> List[InferSentence]:
+  def get_subset(self, sent_ids: Optional[Set[int]], seed: Optional[int] = 1234) -> List[InferSentence]:
     if sent_ids is not None:
       entries = [x for x in self.items() if x.sent_id in sent_ids]
       return entries
 
-    return [self.get_random_entry()]
+    return [self.get_random_entry(seed)]
 
   def to_sentence(self, space_symbol: str, space_accent: str) -> InferSentence:
     res = InferSentence(
