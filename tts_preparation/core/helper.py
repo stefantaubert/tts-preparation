@@ -58,8 +58,8 @@ def prep_data_list_to_dict_with_symbols(l: PreparedDataList, symbols: SymbolIdDi
   return res
 
 
-def prep_data_list_to_dict_with_durations(l: PreparedDataList) -> OrderedDictType[int, float]:
-  res = OrderedDict({x.entry_id: x.duration for x in l.items()})
+def prep_data_list_to_dict_with_durations_s(l: PreparedDataList) -> OrderedDictType[int, float]:
+  res = OrderedDict({x.entry_id: x.duration_s for x in l.items()})
   return res
 
 

@@ -17,7 +17,7 @@ class PreparedData:
   mel_path: str
   serialized_symbol_ids: str
   serialized_accent_ids: str
-  duration: float
+  duration_s: float
   speaker_id: int
 
   def load_init(self):
@@ -34,7 +34,7 @@ class PreparedDataList(GenericList[PreparedData]):
       item.load_init()
 
   def get_total_duration_s(self):
-    durations = [x.duration for x in self.items()]
+    durations = [x.duration_s for x in self.items()]
     total_duration = sum(durations)
     return total_duration
 
@@ -89,7 +89,7 @@ class PreparedDataList(GenericList[PreparedData]):
         ds_entry_id=entry.entry_id,
         text=entry.text,
         text_original=entry.text_original,
-        duration=entry.duration,
+        duration_s=entry.duration,
         mel_path=entry.absolute_mel_path,
         speaker_id=entry.speaker_id,
         serialized_accent_ids=entry.serialized_accent_ids,

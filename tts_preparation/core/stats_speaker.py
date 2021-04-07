@@ -316,15 +316,15 @@ def _get_speaker_duration_stats(speaker_order: List[str], speakers: SpeakersDict
   tot_durations = {}
   for speaker, speaker_id in speakers.items():
     if speaker_id in trn_speaker:
-      trn_durations[speaker] = [x.duration for x in trn_speaker[speaker_id].items()]
+      trn_durations[speaker] = [x.duration_s for x in trn_speaker[speaker_id].items()]
     if speaker_id in val_speaker:
-      val_durations[speaker] = [x.duration for x in val_speaker[speaker_id].items()]
+      val_durations[speaker] = [x.duration_s for x in val_speaker[speaker_id].items()]
     if speaker_id in tst_speaker:
-      tst_durations[speaker] = [x.duration for x in tst_speaker[speaker_id].items()]
+      tst_durations[speaker] = [x.duration_s for x in tst_speaker[speaker_id].items()]
     if speaker_id in rst_speaker:
-      rst_durations[speaker] = [x.duration for x in rst_speaker[speaker_id].items()]
+      rst_durations[speaker] = [x.duration_s for x in rst_speaker[speaker_id].items()]
     if speaker_id in tot_speaker:
-      tot_durations[speaker] = [x.duration for x in tot_speaker[speaker_id].items()]
+      tot_durations[speaker] = [x.duration_s for x in tot_speaker[speaker_id].items()]
 
   meta_dataset = get_meta_dict(
     speakers=speaker_order,

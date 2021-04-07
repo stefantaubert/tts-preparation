@@ -12,7 +12,10 @@ from tts_preparation.app.merge_ds import ds_filter_symbols, merge_ds
 from tts_preparation.app.prepare import (add_ngram, add_ngram_kld,
                                          add_random_count)
 from tts_preparation.app.prepare2 import (app_add_greedy_kld_ngram_minutes,
+                                          app_add_greedy_ngram_epochs,
                                           app_add_greedy_ngram_minutes,
+                                          app_add_ngram_cover,
+                                          app_add_random_minutes,
                                           app_add_random_ngram_cover_minutes,
                                           app_add_random_percent, app_add_rest,
                                           app_add_symbols, app_prepare,
@@ -76,7 +79,7 @@ def ds_filter_symbols_cli(**args):
 def init_prepare_ds_parser(parser: ArgumentParser):
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--prep_name', type=str, required=True)
-  parser.set_defaults(overwrite=True, skip_stats=True)
+  parser.set_defaults(overwrite=True)
   return app_prepare
 
 
@@ -86,7 +89,7 @@ def init_prepare_ds_add_rest_parser(parser: ArgumentParser):
   parser.add_argument('--dest_prep_name', type=str, required=True)
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
-  parser.set_defaults(overwrite=True, skip_stats=True)
+  parser.set_defaults(overwrite=True)
   return app_add_rest
 
 
@@ -104,7 +107,7 @@ def init_prepare_ds_print_and_save_stats_parser(parser: ArgumentParser):
 #   parser.add_argument('--seed', type=int, default=1234)
 #   parser.add_argument('--dataset', choices=DatasetType,
 #                       type=DatasetType.__getitem__)
-#   parser.set_defaults(overwrite=True, skip_stats=True)
+#   parser.set_defaults(overwrite=True)
 #   return add_random_percent
 
 
@@ -116,8 +119,21 @@ def init_prepare_ds_add_random_percent_parser(parser: ArgumentParser):
   parser.add_argument('--seed', type=int, default=1234)
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
-  parser.set_defaults(overwrite=True, skip_stats=True)
+  parser.set_defaults(overwrite=True)
   return app_add_random_percent
+
+
+def init_prepare_ds_add_random_minutes(parser: ArgumentParser):
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--orig_prep_name', type=str, required=True)
+  parser.add_argument('--dest_prep_name', type=str, required=True)
+  parser.add_argument('--minutes', type=float, required=True)
+  parser.add_argument('--seed', type=int, default=1234)
+  parser.add_argument('--dataset', choices=DatasetType,
+                      type=DatasetType.__getitem__)
+  parser.add_argument('--respect_existing', action='store_true')
+  parser.set_defaults(overwrite=True)
+  return app_add_random_minutes
 
 
 def init_prepare_ds_add_random_count_parser_legacy(parser: ArgumentParser):
@@ -174,8 +190,25 @@ def init_prepare_ds_add_ngram_parser_legacy(parser: ArgumentParser):
 #   parser.add_argument('--epochs', type=int)
 #   parser.add_argument('--dataset', choices=DatasetType,
 #                       type=DatasetType.__getitem__)
-#   parser.set_defaults(overwrite=True, skip_stats=True)
+#   parser.set_defaults(overwrite=True)
 #   return app_add_ngram_greedy_epochs
+
+def init_prepare_ds_add_ngram_cover_parser(parser: ArgumentParser):
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--orig_prep_name', type=str, required=True)
+  parser.add_argument('--dest_prep_name', type=str, required=True)
+  parser.add_argument('--dataset', choices=DatasetType,
+                      type=DatasetType.__getitem__)
+  parser.add_argument('--n_gram', type=int, required=True)
+  parser.add_argument('--ignore_symbol_ids', type=str)
+  parser.add_argument('--top_percent', type=float)
+  parser.set_defaults(overwrite=True)
+  return app_add_ngram_cover_cli
+
+
+def app_add_ngram_cover_cli(**args):
+  args["ignore_symbol_ids"] = split_int_set_str(args["ignore_symbol_ids"])
+  app_add_ngram_cover(**args)
 
 
 def init_prepare_ds_add_random_ngram_cover_minutes_parser(parser: ArgumentParser):
@@ -188,7 +221,7 @@ def init_prepare_ds_add_random_ngram_cover_minutes_parser(parser: ArgumentParser
   parser.add_argument('--ignore_symbol_ids', type=str)
   parser.add_argument('--seed', type=int, required=True)
   parser.add_argument('--minutes', type=float, required=True)
-  parser.set_defaults(overwrite=True, skip_stats=True)
+  parser.set_defaults(overwrite=True)
   return app_add_random_ngram_cover_minutes_cli
 
 
@@ -206,7 +239,7 @@ def init_prepare_ds_add_ngrams_kld_minutes_parser(parser: ArgumentParser):
   parser.add_argument('--n_gram', type=int, required=True)
   parser.add_argument('--ignore_symbol_ids', type=str)
   parser.add_argument('--minutes', type=float, required=True)
-  parser.set_defaults(overwrite=True, skip_stats=True)
+  parser.set_defaults(overwrite=True)
   return app_add_ngram_greedy_kld_minutes_cli
 
 
@@ -222,13 +255,31 @@ def init_prepare_ds_add_symbols_parser(parser: ArgumentParser):
   parser.add_argument('--cover_symbol_ids', type=str)
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
-  parser.set_defaults(overwrite=True, skip_stats=True)
+  parser.set_defaults(overwrite=True)
   return app_add_symbols_cli
 
 
 def app_add_symbols_cli(**args):
   args["cover_symbol_ids"] = split_int_set_str(args["cover_symbol_ids"])
   app_add_symbols(**args)
+
+
+def init_prepare_ds_add_ngram_epochs_parser(parser: ArgumentParser):
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--orig_prep_name', type=str, required=True)
+  parser.add_argument('--dest_prep_name', type=str, required=True)
+  parser.add_argument('--dataset', choices=DatasetType,
+                      type=DatasetType.__getitem__)
+  parser.add_argument('--n_gram', type=int, required=True)
+  parser.add_argument('--epochs', type=int, required=True)
+  parser.add_argument('--ignore_symbol_ids', type=str)
+  parser.set_defaults(overwrite=True)
+  return app_add_greedy_ngram_epochs_cli
+
+
+def app_add_greedy_ngram_epochs_cli(**args):
+  args["ignore_symbol_ids"] = split_int_set_str(args["ignore_symbol_ids"])
+  app_add_greedy_ngram_epochs(**args)
 
 
 def init_prepare_ds_add_ngram_minute_parser(parser: ArgumentParser):
@@ -240,7 +291,7 @@ def init_prepare_ds_add_ngram_minute_parser(parser: ArgumentParser):
   parser.add_argument('--n_gram', type=int, required=True)
   parser.add_argument('--ignore_symbol_ids', type=str)
   parser.add_argument('--minutes', type=float, required=True)
-  parser.set_defaults(overwrite=True, skip_stats=True)
+  parser.set_defaults(overwrite=True)
   return app_add_greedy_ngram_minutes_cli
 
 
@@ -328,10 +379,12 @@ def _init_parser():
   _add_parser_to(subparsers, "prepare-ds", init_prepare_ds_parser)
   _add_parser_to(subparsers, "prepare-ds-add-symbols", init_prepare_ds_add_symbols_parser)
   _add_parser_to(subparsers, "prepare-ds-add-ngram", init_prepare_ds_add_ngram_parser_legacy)
-  _add_parser_to(subparsers, "prepare-ds-add-ngram-random-cover-minutes",
-                 init_prepare_ds_add_random_ngram_cover_minutes_parser)
   _add_parser_to(subparsers, "prepare-ds-add-ngram-minutes",
                  init_prepare_ds_add_ngram_minute_parser)
+  _add_parser_to(subparsers, "prepare-ds-add-ngram-epochs",
+                 init_prepare_ds_add_ngram_epochs_parser)
+  _add_parser_to(subparsers, "prepare-ds-add-ngram-cover",
+                 init_prepare_ds_add_ngram_cover_parser)
   #_add_parser_to(subparsers, "prepare-ds-add-ngram-epochs",init_prepare_ds_add_greedy_ngram_epochs_parser)
   _add_parser_to(subparsers, "prepare-ds-add-ngram-kld", init_prepare_ds_add_ngram_parser_legacy)
   _add_parser_to(subparsers, "prepare-ds-add-ngram-kld-minutes",
@@ -340,6 +393,10 @@ def _init_parser():
                  init_prepare_ds_add_random_count_parser_legacy)
   _add_parser_to(subparsers, "prepare-ds-add-random-percent",
                  init_prepare_ds_add_random_percent_parser)
+  _add_parser_to(subparsers, "prepare-ds-add-random-minutes",
+                 init_prepare_ds_add_random_minutes)
+  _add_parser_to(subparsers, "prepare-ds-add-ngram-random-cover-minutes",
+                 init_prepare_ds_add_random_ngram_cover_minutes_parser)
   _add_parser_to(subparsers, "prepare-ds-add-rest", init_prepare_ds_add_rest_parser)
   _add_parser_to(subparsers, "prepare-ds-stats", init_prepare_ds_print_and_save_stats_parser)
 

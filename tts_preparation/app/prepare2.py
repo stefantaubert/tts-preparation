@@ -4,18 +4,21 @@ from logging import Logger, getLogger
 from typing import Callable, Optional, Set, Tuple
 
 import pandas as pd
-from text_utils.symbol_id_dict import SymbolIdDict
+from text_utils import SymbolIdDict
 from tts_preparation.app.merge_ds import (get_merged_dir, load_merged_data,
                                           load_merged_speakers_json,
                                           load_merged_symbol_converter)
 from tts_preparation.core.data import (DatasetType, PreparedData,
                                        PreparedDataList)
-from tts_preparation.core.main2 import (add_greedy_kld_ngram_seconds,
-                                        add_greedy_ngram_seconds,
-                                        add_random_ngram_cover_seconds,
-                                        add_random_percent, add_rest,
-                                        add_symbols, core_process_stats,
-                                        prepare_core)
+from tts_preparation.core.prepare2 import (add_greedy_kld_ngram_seconds,
+                                           add_greedy_ngram_epochs,
+                                           add_greedy_ngram_seconds,
+                                           add_ngram_cover,
+                                           add_random_ngram_cover_seconds,
+                                           add_random_percent,
+                                           add_random_seconds, add_rest,
+                                           add_symbols, core_process_stats,
+                                           prepare_core)
 from tts_preparation.core.stats_speaker import (get_speaker_stats,
                                                 log_general_stats)
 from tts_preparation.core.stats_symbols import get_ngram_stats_df
@@ -246,6 +249,29 @@ def process_stats(base_dir: str, merge_name: str, prep_name: str, ds: DatasetTyp
   )
 
 
+def _print_quick_stats(base_dir: str, merge_name: str, prep_name: str, logger: Logger):
+  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+  merge_data = load_merged_data(merge_dir)
+  prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
+  trainset = load_trainset(prep_dir) if os.path.isfile(
+    get_trainset_path(prep_dir)) else PreparedDataList()
+  testset = load_testset(prep_dir) if os.path.isfile(
+    get_testset_path(prep_dir)) else PreparedDataList()
+  valset = load_valset(prep_dir) if os.path.isfile(
+    get_valset_path(prep_dir)) else PreparedDataList()
+  restset = load_restset(prep_dir) if os.path.isfile(
+    get_restset_path(prep_dir)) else PreparedDataList()
+
+  log_general_stats(
+    trainset=trainset,
+    valset=valset,
+    testset=testset,
+    restset=restset,
+    merge_data=merge_data,
+    logger=logger,
+  )
+
+
 def _print_and_save_stats_main(base_dir: str, merge_name: str, prep_name: str, logger: Logger):
   merge_dir = get_merged_dir(base_dir, merge_name, create=False)
   merge_data = load_merged_data(merge_dir)
@@ -320,7 +346,7 @@ def _print_and_save_stats_main(base_dir: str, merge_name: str, prep_name: str, l
   logger.info("Done.")
 
 
-def app_prepare(base_dir: str, merge_name: str, prep_name: str, overwrite: bool = True, skip_stats: bool = True):
+def app_prepare(base_dir: str, merge_name: str, prep_name: str, overwrite: bool = True):
   logger = getLogger(__name__)
   merge_dir = get_merged_dir(base_dir, merge_name, create=False)
   prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
@@ -337,8 +363,7 @@ def app_prepare(base_dir: str, merge_name: str, prep_name: str, overwrite: bool 
   save_restset(prep_dir, totalset)
   save_totalset(prep_dir, totalset)
   logger.info("Done.")
-  if not skip_stats:
-    _print_and_save_stats_main(base_dir, merge_name, prep_name, logger)
+  _print_quick_stats(base_dir, merge_name, prep_name, logger)
 
 
 def load_set(prep_dir: str, dataset: DatasetType) -> PreparedDataList:
@@ -378,7 +403,7 @@ def copy_orig_to_dest_dir(orig_prep_dir: str, dest_prep_dir: str):
     save_totalset(dest_prep_dir, load_totalset(orig_prep_dir))
 
 
-def app_add_rest(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, overwrite: bool = True, skip_stats: bool = True):
+def app_add_rest(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, overwrite: bool = True):
   __add(
     base_dir=base_dir,
     merge_name=merge_name,
@@ -386,12 +411,11 @@ def app_add_rest(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_
     dest_prep_name=dest_prep_name,
     dataset=dataset,
     overwrite=overwrite,
-    skip_stats=skip_stats,
     func=add_rest,
   )
 
 
-def app_add_random_percent(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, percent: float, seed: int, dataset: DatasetType, overwrite: bool = True, skip_stats: bool = True):
+def app_add_ngram_cover(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, ignore_symbol_ids: Optional[Set[int]] = None, top_percent: Optional[float] = None, overwrite: bool = True):
   __add(
     base_dir=base_dir,
     merge_name=merge_name,
@@ -399,14 +423,43 @@ def app_add_random_percent(base_dir: str, merge_name: str, orig_prep_name: str, 
     dest_prep_name=dest_prep_name,
     dataset=dataset,
     overwrite=overwrite,
-    skip_stats=skip_stats,
+    func=add_ngram_cover,
+    n_gram=n_gram,
+    ignore_symbol_ids=ignore_symbol_ids,
+    top_percent=top_percent,
+  )
+
+
+def app_add_random_minutes(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, minutes: float, seed: int, dataset: DatasetType, respect_existing: bool = False, overwrite: bool = True):
+  __add(
+    base_dir=base_dir,
+    merge_name=merge_name,
+    orig_prep_name=orig_prep_name,
+    dest_prep_name=dest_prep_name,
+    dataset=dataset,
+    overwrite=overwrite,
+    func=add_random_seconds,
+    seconds=minutes * 60,
+    seed=seed,
+    respect_existing=respect_existing,
+  )
+
+
+def app_add_random_percent(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, percent: float, seed: int, dataset: DatasetType, overwrite: bool = True):
+  __add(
+    base_dir=base_dir,
+    merge_name=merge_name,
+    orig_prep_name=orig_prep_name,
+    dest_prep_name=dest_prep_name,
+    dataset=dataset,
+    overwrite=overwrite,
     func=add_random_percent,
     percent=percent,
     seed=seed,
   )
 
 
-def app_add_symbols(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, cover_symbol_ids: Set[int], overwrite: bool = True, skip_stats: bool = True):
+def app_add_symbols(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, cover_symbol_ids: Set[int], overwrite: bool = True):
   __add(
     base_dir=base_dir,
     merge_name=merge_name,
@@ -414,13 +467,12 @@ def app_add_symbols(base_dir: str, merge_name: str, orig_prep_name: str, dest_pr
     dest_prep_name=dest_prep_name,
     dataset=dataset,
     overwrite=overwrite,
-    skip_stats=skip_stats,
     func=add_symbols,
     cover_symbol_ids=cover_symbol_ids,
   )
 
 
-def app_add_random_ngram_cover_minutes(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, seed: int, minutes: float, ignore_symbol_ids: Optional[Set[int]] = None, overwrite: bool = True, skip_stats: bool = True):
+def app_add_random_ngram_cover_minutes(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, seed: int, minutes: float, ignore_symbol_ids: Optional[Set[int]] = None, overwrite: bool = True):
   __add(
     base_dir=base_dir,
     merge_name=merge_name,
@@ -428,7 +480,6 @@ def app_add_random_ngram_cover_minutes(base_dir: str, merge_name: str, orig_prep
     dest_prep_name=dest_prep_name,
     dataset=dataset,
     overwrite=overwrite,
-    skip_stats=skip_stats,
     func=add_random_ngram_cover_seconds,
     ignore_symbol_ids=ignore_symbol_ids,
     seconds=minutes * 60,
@@ -437,7 +488,7 @@ def app_add_random_ngram_cover_minutes(base_dir: str, merge_name: str, orig_prep
   )
 
 
-def app_add_greedy_ngram_minutes(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, minutes: float, ignore_symbol_ids: Optional[Set[int]] = None, overwrite: bool = True, skip_stats: bool = True):
+def app_add_greedy_ngram_minutes(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, minutes: float, ignore_symbol_ids: Optional[Set[int]] = None, overwrite: bool = True):
   __add(
     base_dir=base_dir,
     merge_name=merge_name,
@@ -445,7 +496,6 @@ def app_add_greedy_ngram_minutes(base_dir: str, merge_name: str, orig_prep_name:
     dest_prep_name=dest_prep_name,
     dataset=dataset,
     overwrite=overwrite,
-    skip_stats=skip_stats,
     func=add_greedy_ngram_seconds,
     ignore_symbol_ids=ignore_symbol_ids,
     seconds=minutes * 60,
@@ -453,7 +503,7 @@ def app_add_greedy_ngram_minutes(base_dir: str, merge_name: str, orig_prep_name:
   )
 
 
-def app_add_greedy_kld_ngram_minutes(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, minutes: float, ignore_symbol_ids: Optional[Set[int]] = None, overwrite: bool = True, skip_stats: bool = True):
+def app_add_greedy_ngram_epochs(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, epochs: int, ignore_symbol_ids: Optional[Set[int]] = None, overwrite: bool = True):
   __add(
     base_dir=base_dir,
     merge_name=merge_name,
@@ -461,7 +511,21 @@ def app_add_greedy_kld_ngram_minutes(base_dir: str, merge_name: str, orig_prep_n
     dest_prep_name=dest_prep_name,
     dataset=dataset,
     overwrite=overwrite,
-    skip_stats=skip_stats,
+    func=add_greedy_ngram_epochs,
+    ignore_symbol_ids=ignore_symbol_ids,
+    n_gram=n_gram,
+    epochs=epochs,
+  )
+
+
+def app_add_greedy_kld_ngram_minutes(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, minutes: float, ignore_symbol_ids: Optional[Set[int]] = None, overwrite: bool = True):
+  __add(
+    base_dir=base_dir,
+    merge_name=merge_name,
+    orig_prep_name=orig_prep_name,
+    dest_prep_name=dest_prep_name,
+    dataset=dataset,
+    overwrite=overwrite,
     func=add_greedy_kld_ngram_seconds,
     ignore_symbol_ids=ignore_symbol_ids,
     seconds=minutes * 60,
@@ -469,7 +533,7 @@ def app_add_greedy_kld_ngram_minutes(base_dir: str, merge_name: str, orig_prep_n
   )
 
 
-def __add(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, overwrite: bool, skip_stats: bool, func: Callable[[PreparedDataList, PreparedDataList, SymbolIdDict], Tuple[PreparedDataList, PreparedDataList]], **kwargs):
+def __add(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, overwrite: bool, func: Callable[[PreparedDataList, PreparedDataList, SymbolIdDict], Tuple[PreparedDataList, PreparedDataList]], **kwargs):
   logger = getLogger(__name__)
   logger.info(f"Adding utterances speaker-wise to {str(dataset)}...")
   merge_dir = get_merged_dir(base_dir, merge_name, create=False)
@@ -490,5 +554,4 @@ def __add(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: s
     copy_orig_to_dest_dir(orig_prep_dir, dest_prep_dir)
   _save_results(dest_prep_dir, new_set, new_restset, dataset)
   logger.info("Done.")
-  if not skip_stats:
-    _print_and_save_stats_main(base_dir, merge_name, dest_prep_dir, logger)
+  _print_quick_stats(base_dir, merge_name, dest_prep_name, logger)
