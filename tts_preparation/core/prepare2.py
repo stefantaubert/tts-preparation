@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from logging import Logger, getLogger
+from shutil import Error
 from typing import Callable, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple
@@ -10,7 +11,8 @@ from text_utils import SymbolIdDict
 from text_utils.text_selection import (cover_symbols_default,
                                        greedy_ngrams_seconds,
                                        random_ngrams_cover_seconds,
-                                       random_percent)
+                                       random_percent,
+                                       random_seconds_divergence_seeds)
 from text_utils.text_selection.greedy_export import (greedy_ngrams_cover,
                                                      greedy_ngrams_epochs)
 from text_utils.text_selection.greedy_kld_export import \
@@ -84,6 +86,28 @@ def __add(existing_set: PreparedDataList, restset: PreparedDataList, symbols: Sy
       f"Took {len(selected_data)}/{len(speaker_available)} utterances from speaker {speaker_id} ({selected_data.get_total_duration_s()/60:.2f}min/{selected_data.get_total_duration_s()/60/60:.2f}h).")
 
   return new_set, new_restset
+
+
+def get_random_seconds_divergent_seeds(restset: PreparedDataList, symbols: SymbolIdDict, seed: int, seconds: float, samples: int, n: int) -> OrderedSet[int]:
+  available_speaker_data = get_speaker_wise(restset)
+
+  if len(available_speaker_data) > 1:
+    raise Error("This method is not supported for multiple speakers.")
+
+  speaker_available = list(available_speaker_data.values())[0]
+  speaker_available_dict = prep_data_list_to_dict_with_symbols(speaker_available, symbols)
+  speaker_avail_durations_s = prep_data_list_to_dict_with_durations_s(speaker_available)
+
+  selected_seeds = random_seconds_divergence_seeds(
+    data=speaker_available_dict,
+    seed=seed,
+    durations_s=speaker_avail_durations_s,
+    seconds=seconds,
+    samples=samples,
+    n=n,
+  )
+
+  return selected_seeds
 
 
 def add_random_percent(existing_set: PreparedDataList, restset: PreparedDataList, symbols: SymbolIdDict, seed: int, percent: float) -> Tuple[PreparedDataList, PreparedDataList]:

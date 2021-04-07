@@ -18,6 +18,7 @@ from tts_preparation.core.prepare2 import (add_greedy_kld_ngram_seconds,
                                            add_random_percent,
                                            add_random_seconds, add_rest,
                                            add_symbols, core_process_stats,
+                                           get_random_seconds_divergent_seeds,
                                            prepare_core)
 from tts_preparation.core.stats_speaker import (get_speaker_stats,
                                                 log_general_stats)
@@ -555,3 +556,22 @@ def __add(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: s
   _save_results(dest_prep_dir, new_set, new_restset, dataset)
   logger.info("Done.")
   _print_quick_stats(base_dir, merge_name, dest_prep_name, logger)
+
+
+def app_get_random_seconds_divergent_seeds(base_dir: str, merge_name: str, prep_name: str, minutes: float, seed: int, samples: int, n: int):
+  logger = getLogger(__name__)
+  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+  symbols = load_merged_symbol_converter(merge_dir)
+  orig_prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
+  rest_set = load_restset(orig_prep_dir)
+
+  selected_seeds = get_random_seconds_divergent_seeds(
+    restset=rest_set,
+    symbols=symbols,
+    seed=seed,
+    seconds=minutes * 60,
+    n=n,
+    samples=samples,
+  )
+
+  logger.info(f"The most divergent seeds are: {', '.join([str(x) for x in selected_seeds])}.")

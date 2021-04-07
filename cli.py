@@ -116,7 +116,7 @@ def init_prepare_ds_add_random_percent_parser(parser: ArgumentParser):
   parser.add_argument('--orig_prep_name', type=str, required=True)
   parser.add_argument('--dest_prep_name', type=str, required=True)
   parser.add_argument('--percent', type=float, required=True)
-  parser.add_argument('--seed', type=int, default=1234)
+  parser.add_argument('--seed', type=int)
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
   parser.set_defaults(overwrite=True)
@@ -128,7 +128,7 @@ def init_prepare_ds_add_random_minutes(parser: ArgumentParser):
   parser.add_argument('--orig_prep_name', type=str, required=True)
   parser.add_argument('--dest_prep_name', type=str, required=True)
   parser.add_argument('--minutes', type=float, required=True)
-  parser.add_argument('--seed', type=int, default=1234)
+  parser.add_argument('--seed', type=int)
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
   parser.add_argument('--respect_existing', action='store_true')
