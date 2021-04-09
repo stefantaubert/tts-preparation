@@ -19,6 +19,10 @@ class PreparedData:
   serialized_accent_ids: str
   duration_s: float
   speaker_id: int
+  one_gram_rarity: float
+  two_gram_rarity: float
+  three_gram_rarity: float
+  combined_rarity: float
 
   def load_init(self):
     pass
@@ -95,6 +99,10 @@ class PreparedDataList(GenericList[PreparedData]):
         serialized_accent_ids=entry.serialized_accent_ids,
         serialized_symbol_ids=entry.serialized_symbol_ids,
         wav_path=entry.absolute_wav_path,
+        one_gram_rarity=entry.one_gram_rarity,
+        two_gram_rarity=entry.two_gram_rarity,
+        three_gram_rarity=entry.three_gram_rarity,
+        combined_rarity=entry.combined_rarity,
       )
       res.append(prep_data)
     res.custom_sort()

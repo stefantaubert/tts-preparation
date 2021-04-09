@@ -34,7 +34,7 @@
         "audio-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/audio-utils.git",
-            "ref": "b45780f493ba3cb58559d248ddd9a993cdfef4b1"
+            "ref": "8f98f04b19f408861da424dcc7ab2322d8fd3ce9"
         },
         "audioread": {
             "hashes": [
@@ -174,6 +174,13 @@
                 "sha256:f36836e33a025c4a576d0928fab08f3f6bb570fd7d43c5b23a4f5c12b22b8b5a"
             ],
             "version": "==1.9"
+        },
+        "fastdtw": {
+            "hashes": [
+                "sha256:2350fa6ec36bcad186eaf81f46eff35181baf04e324f522de8aeb43d0243f64f",
+                "sha256:28918c163dce9e736e09252a02073fce712bc4c7aa18f2a45d882cca84da2dbb"
+            ],
+            "version": "==0.3.4"
         },
         "hanzidentifier": {
             "hashes": [
@@ -352,11 +359,11 @@
         },
         "nltk": {
             "hashes": [
-                "sha256:5c5c0c02942cb423d38e5d66285257f53f05e420a8715bca273fb9cf28067e0e",
-                "sha256:718de6908f538db19a77f96b9e6f5f586b0892d7de5eea32e71f2a2535ed8657"
+                "sha256:1235660f52ab10fda34d5277096724747f767b2903e1c0c4e14bde013552c9ba",
+                "sha256:cbc2ed576998fcf7cd181eeb3ca029e5f0025b264074b4beb57ce780673f8b86"
             ],
             "markers": "python_version >= '3.5'",
-            "version": "==3.6"
+            "version": "==3.6.1"
         },
         "numba": {
             "hashes": [
@@ -809,7 +816,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "09c1483bdc9d473b4b973344b20a7c15a1b35060"
+            "ref": "93cf075df29fc2fd6ffda2b31499d21538baafbd"
         },
         "threadpoolctl": {
             "hashes": [
@@ -821,11 +828,11 @@
         },
         "tifffile": {
             "hashes": [
-                "sha256:3a966053e09a89317e6c9bdf99db4bf5c4d3d611ca8ac455024d7824ea5772b3",
-                "sha256:e0182c4f819688cad03788006512295875565127b7a7eeab0993304e2aa33c76"
+                "sha256:1cfc55f5b728e200142580a7bf108b72775c4097d007b4111876559fa1fb7432",
+                "sha256:55aa8baad38e1567c9fe450fff52160e4a21294a612f241c5e414da80f87209b"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==2021.3.31"
+            "version": "==2021.4.8"
         },
         "toml": {
             "hashes": [

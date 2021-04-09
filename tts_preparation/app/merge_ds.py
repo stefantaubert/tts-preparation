@@ -13,7 +13,7 @@ from speech_dataset_preprocessing import (get_ds_dir, get_mel_dir,
 from text_utils import AccentsDict, SpeakersDict, SymbolIdDict
 from tts_preparation.core.merge_ds import (DsDataset, DsDatasetList,
                                            MergedDataset, MergedDatasetEntry,
-                                           filter_symbols, preprocess)
+                                           filter_symbols, merge)
 from tts_preparation.utils import get_subdir
 
 _merge_data_csv = "data.csv"
@@ -99,7 +99,7 @@ def merge_ds(base_dir: str, sdp_dir: str, merge_name: str, ds_speakers: List[Tup
 
     datasets.append(ds_dataset)
 
-  merged_data = preprocess(
+  merged_data = merge(
     datasets=datasets,
     ds_speakers=ds_speakers,
     logger=logger,

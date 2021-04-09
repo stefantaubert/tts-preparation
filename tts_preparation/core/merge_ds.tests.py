@@ -8,7 +8,7 @@ from text_utils import (AccentsDict, Gender, Language, SpeakersDict,
                         SymbolIdDict)
 from tts_preparation.core.data import PreparedData, PreparedDataList
 from tts_preparation.core.merge_ds import (DsDataset, expand_speakers,
-                                           preprocess)
+                                           merge)
 
 
 class UnitTests(unittest.TestCase):
@@ -187,7 +187,7 @@ class UnitTests(unittest.TestCase):
       ("thchs", "speaker1"),
     }
 
-    whole, conv, speakers_id_dict = preprocess(datasets, ds_speakers, speakers_as_accents=False)
+    whole, conv, speakers_id_dict = merge(datasets, ds_speakers, speakers_as_accents=False)
 
     self.assertEqual(4, len(whole))
     self.assertEqual(set({"a", "b", "c"}), set(conv.get_all_symbols()))

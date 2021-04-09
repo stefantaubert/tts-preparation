@@ -1,12 +1,16 @@
 import os
+from collections import OrderedDict
 from dataclasses import dataclass
-from logging import Logger
-from typing import Dict, List, Optional, OrderedDict, Set, Tuple
+from logging import Logger, getLogger
+from typing import Dict, List, Optional
+from typing import OrderedDict as OrderedDictType
+from typing import Set, Tuple
 
 from speech_dataset_preprocessing import (DsDataList, MelDataList,
                                           TextDataList, WavDataList)
 from text_utils import (AccentsDict, Gender, Language, SpeakersDict,
                         SymbolIdDict, deserialize_list)
+from text_utils.text_selection import get_rarity_ngrams
 from tts_preparation.globals import (DEFAULT_PADDING_ACCENT,
                                      DEFAULT_PADDING_SYMBOL)
 from tts_preparation.utils import (GenericList, contains_only_allowed_symbols,
@@ -50,6 +54,10 @@ class MergedDatasetEntry():
   sampling_rate: int
   absolute_mel_path: str
   n_mel_channels: int
+  one_gram_rarity: float
+  two_gram_rarity: float
+  three_gram_rarity: float
+  combined_rarity: float
 
   def load_init(self):
     self.lang = Language(self.lang)
@@ -83,6 +91,10 @@ class MergedDataset(GenericList[MergedDatasetEntry]):
         sampling_rate=wav_data.sr,
         absolute_mel_path=absolute_mel_path,
         n_mel_channels=mel_data.n_mel_channels,
+        one_gram_rarity=0,
+        two_gram_rarity=0,
+        three_gram_rarity=0,
+        combined_rarity=0,
       )
       res.append(new_entry)
     return res
@@ -91,6 +103,19 @@ class MergedDataset(GenericList[MergedDatasetEntry]):
     durations = [x.duration for x in self.items()]
     total_duration = sum(durations)
     return total_duration
+
+  def get_ngram_rarity(self, symbols: SymbolIdDict, ngram: int) -> OrderedDictType[int, float]:
+    data_symbols_dict = OrderedDict({x.entry_id: symbols.get_symbols(
+      x.serialized_symbol_ids) for x in self.items()})
+
+    rarity = get_rarity_ngrams(
+      data=data_symbols_dict,
+      corpus=data_symbols_dict,
+      n_gram=ngram,
+      ignore_symbols=None,
+    )
+
+    return rarity
 
 
 class MergedDatasetContainer():
@@ -153,8 +178,12 @@ class MergedDatasetContainerList():
     self.data = data
 
   def merge(self) -> MergedDatasetContainer:
+    logger = getLogger(__name__)
+    logger.info("Creating common accents...")
     accent_ids = self.make_common_accent_ids()
+    logger.info("Creating common speakers...")
     speaker_ids = self.make_common_speaker_ids()
+    logger.info("Creating common symbols...")
     symbol_ids = self.make_common_symbol_ids()
 
     new_ds = MergedDataset()
@@ -163,7 +192,17 @@ class MergedDatasetContainerList():
         new_ds.append(entry)
 
     # TODO: maybe sorting after speakerid and then entry_id
+    logger.info("Calculating n-gram rarity...")
+    onegram_rarity = new_ds.get_ngram_rarity(symbol_ids, 1)
+    twogram_rarity = new_ds.get_ngram_rarity(symbol_ids, 2)
+    threegram_rarity = new_ds.get_ngram_rarity(symbol_ids, 3)
 
+    for item in new_ds.items():
+      item.one_gram_rarity = onegram_rarity[item.entry_id]
+      item.two_gram_rarity = twogram_rarity[item.entry_id]
+      item.three_gram_rarity = threegram_rarity[item.entry_id]
+      item.combined_rarity = item.one_gram_rarity + item.two_gram_rarity + item.three_gram_rarity
+    logger.info("Done.")
     # # Set new entry_id
     # for i, entry in enumerate(new_ds.items()):
     #   entry.entry_id = i
@@ -263,7 +302,7 @@ def _get_ds_speaker_ids(datasets: DsDatasetList, ds_speakers: List[Tuple[str, st
   return result
 
 
-def preprocess(datasets: DsDatasetList, ds_speakers: List[Tuple[str, str]], logger: Logger) -> MergedDatasetContainer:
+def merge(datasets: DsDatasetList, ds_speakers: List[Tuple[str, str]], logger: Logger) -> MergedDatasetContainer:
   ds_sepaker_ids = _get_ds_speaker_ids(datasets, ds_speakers)
 
   merged_datasets: List[MergedDatasetContainer] = []
@@ -294,7 +333,7 @@ def preprocess(datasets: DsDatasetList, ds_speakers: List[Tuple[str, str]], logg
   return result
 
 
-def expand_speakers(speakers_dict: OrderedDict[str, List[str]], ds_speakers: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
+def expand_speakers(speakers_dict: OrderedDictType[str, List[str]], ds_speakers: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
   # expand all
   expanded_speakers: List[Tuple[str, str]] = []
   for ds_name, speaker_name in ds_speakers:
