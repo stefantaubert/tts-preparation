@@ -565,7 +565,7 @@ def app_get_random_seconds_divergent_seeds(base_dir: str, merge_name: str, prep_
   orig_prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
   rest_set = load_restset(orig_prep_dir)
 
-  selected_seeds = get_random_seconds_divergent_seeds(
+  selected_seeds, selected_sets = get_random_seconds_divergent_seeds(
     restset=rest_set,
     symbols=symbols,
     seed=seed,
@@ -574,4 +574,11 @@ def app_get_random_seconds_divergent_seeds(base_dir: str, merge_name: str, prep_
     samples=samples,
   )
 
-  logger.info(f"The most divergent seeds are: {', '.join([str(x) for x in selected_seeds])}.")
+  logger.info("The most divergent seeds are:")
+  show_n = 10
+  for selected_seed, selected_set in zip(selected_seeds, selected_sets):
+    selected_entry_ids = list(sorted(selected_set))
+    first_entries = list(map(str, selected_entry_ids[:show_n]))
+    last_entries = list(map(str, selected_entry_ids[-show_n:]))
+    logger.info(
+      f"{selected_seed}: {', '.join(first_entries)}, ..., {', '.join(last_entries)} ({len(selected_entry_ids)})")

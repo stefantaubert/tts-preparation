@@ -11,15 +11,12 @@ from tts_preparation.app.mapping import (create_or_update_inference_map_main,
 from tts_preparation.app.merge_ds import ds_filter_symbols, merge_ds
 from tts_preparation.app.prepare import (add_ngram, add_ngram_kld,
                                          add_random_count)
-from tts_preparation.app.prepare2 import (app_add_greedy_kld_ngram_minutes,
-                                          app_add_greedy_ngram_epochs,
-                                          app_add_greedy_ngram_minutes,
-                                          app_add_ngram_cover,
-                                          app_add_random_minutes,
-                                          app_add_random_ngram_cover_minutes,
-                                          app_add_random_percent, app_add_rest,
-                                          app_add_symbols, app_prepare,
-                                          print_and_save_stats)
+from tts_preparation.app.prepare2 import (
+    app_add_greedy_kld_ngram_minutes, app_add_greedy_ngram_epochs,
+    app_add_greedy_ngram_minutes, app_add_ngram_cover, app_add_random_minutes,
+    app_add_random_ngram_cover_minutes, app_add_random_percent, app_add_rest,
+    app_add_symbols, app_get_random_seconds_divergent_seeds, app_prepare,
+    print_and_save_stats)
 from tts_preparation.core.data import DatasetType
 from tts_preparation.utils import parse_tuple_list, split_int_set_str
 
@@ -300,6 +297,16 @@ def app_add_greedy_ngram_minutes_cli(**args):
   app_add_greedy_ngram_minutes(**args)
 
 
+def init_get_random_seconds_divergent_seeds_parser(parser: ArgumentParser):
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--minutes', type=float, required=True)
+  parser.add_argument('--seed', type=int, required=True)
+  parser.add_argument('--samples', type=int, required=True)
+  parser.add_argument('--n', type=int, required=True)
+  return app_get_random_seconds_divergent_seeds
+
+
 def init_create_or_update_weights_map_parser(parser: ArgumentParser):
   parser.add_argument('--merge_name', type=str, required=True,
                       help="The prepared name for the model which will be trained.")
@@ -393,6 +400,8 @@ def _init_parser():
                  init_prepare_ds_add_random_count_parser_legacy)
   _add_parser_to(subparsers, "prepare-ds-add-random-percent",
                  init_prepare_ds_add_random_percent_parser)
+  _add_parser_to(subparsers, "prepare-ds-get-random-minutes-divergence-seeds",
+                 init_get_random_seconds_divergent_seeds_parser)
   _add_parser_to(subparsers, "prepare-ds-add-random-minutes",
                  init_prepare_ds_add_random_minutes)
   _add_parser_to(subparsers, "prepare-ds-add-ngram-random-cover-minutes",
