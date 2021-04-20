@@ -41,8 +41,13 @@ def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:
   return symbols_map
 
 
-def save_infer_symbols(merge_dir: str, symbols: List[str]):
+def get_infer_symbols_path(merge_dir: str) -> str:
   path = os.path.join(merge_dir, INFER_MAP_SYMB_FN)
+  return path
+
+
+def save_infer_symbols(merge_dir: str, symbols: List[str]):
+  path = get_infer_symbols_path(merge_dir)
   save_symbols(path, symbols)
 
 
