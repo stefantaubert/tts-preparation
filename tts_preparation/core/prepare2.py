@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from logging import Logger, getLogger
 from shutil import Error
 from typing import Callable, List, Optional
@@ -9,7 +8,6 @@ import pandas as pd
 from ordered_set import OrderedSet
 from text_utils import SymbolIdDict
 from text_utils.text_selection import (cover_symbols_default,
-                                       get_rarity_ngrams,
                                        greedy_kld_uniform_ngrams_seconds,
                                        greedy_ngrams_cover,
                                        greedy_ngrams_epochs,

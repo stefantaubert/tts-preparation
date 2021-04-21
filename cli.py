@@ -9,8 +9,6 @@ from tts_preparation.app.inference import (accent_apply, accent_set, add_text,
 from tts_preparation.app.mapping import (create_or_update_inference_map_main,
                                          create_or_update_weights_map_main)
 from tts_preparation.app.merge_ds import ds_filter_symbols, merge_ds
-from tts_preparation.app.prepare import (add_ngram, add_ngram_kld,
-                                         add_random_count)
 from tts_preparation.app.prepare2 import (
     app_add_greedy_kld_ngram_minutes, app_add_greedy_ngram_epochs,
     app_add_greedy_ngram_minutes, app_add_n_diverse_random_minutes,
@@ -145,52 +143,6 @@ def init_prepare_ds_add_random_minutes(parser: ArgumentParser):
   parser.add_argument('--respect_existing', action='store_true')
   parser.set_defaults(overwrite=True)
   return app_add_random_minutes
-
-
-def init_prepare_ds_add_random_count_parser_legacy(parser: ArgumentParser):
-  parser.add_argument('--merge_name', type=str, required=True)
-  parser.add_argument('--orig_prep_name', type=str, required=True)
-  parser.add_argument('--dest_prep_name', type=str, required=True)
-  parser.add_argument('--shards_per_speaker', type=int, required=True)
-  parser.add_argument('--seed', type=int, default=1234)
-  parser.add_argument('--ignore_already_added', action='store_true')
-  parser.add_argument('--min_count_symbol', type=int, default=0)
-  parser.add_argument('--dataset', choices=DatasetType,
-                      type=DatasetType.__getitem__)
-  parser.set_defaults(overwrite=True)
-  return add_random_count
-
-
-def init_prepare_ds_add_ngram_kld_parser_legacy(parser: ArgumentParser):
-  parser.add_argument('--merge_name', type=str, required=True)
-  parser.add_argument('--orig_prep_name', type=str, required=True)
-  parser.add_argument('--dest_prep_name', type=str, required=True)
-  parser.add_argument('--n_gram', type=int, required=True)
-  parser.add_argument('--shards_per_speaker', type=int)
-  parser.add_argument('--n_its', type=int)
-  parser.add_argument('--dataset', choices=DatasetType,
-                      type=DatasetType.__getitem__)
-  parser.add_argument('--ignore_already_added', action='store_true')
-  parser.add_argument('--min_count_symbol', type=int, default=0)
-  parser.add_argument('--top_percent', type=float, default=100)
-  parser.set_defaults(overwrite=True)
-  return add_ngram_kld
-
-
-def init_prepare_ds_add_ngram_parser_legacy(parser: ArgumentParser):
-  parser.add_argument('--merge_name', type=str, required=True)
-  parser.add_argument('--orig_prep_name', type=str, required=True)
-  parser.add_argument('--dest_prep_name', type=str, required=True)
-  parser.add_argument('--n_gram', type=int, required=True)
-  parser.add_argument('--shards_per_speaker', type=int)
-  parser.add_argument('--n_its', type=int)
-  parser.add_argument('--dataset', choices=DatasetType,
-                      type=DatasetType.__getitem__)
-  parser.add_argument('--ignore_already_added', action='store_true')
-  parser.add_argument('--min_count_symbol', type=int, default=0)
-  parser.add_argument('--top_percent', type=float, default=100)
-  parser.set_defaults(overwrite=True)
-  return add_ngram
 
 
 # def init_prepare_ds_add_greedy_ngram_epochs_parser(parser: ArgumentParser):
@@ -399,7 +351,6 @@ def _init_parser():
   # _add_parser_to(subparsers, "split-ds", init_split_ds_parser)
   _add_parser_to(subparsers, "prepare-ds", init_prepare_ds_parser)
   _add_parser_to(subparsers, "prepare-ds-add-symbols", init_prepare_ds_add_symbols_parser)
-  _add_parser_to(subparsers, "prepare-ds-add-ngram", init_prepare_ds_add_ngram_parser_legacy)
   _add_parser_to(subparsers, "prepare-ds-add-ngram-minutes",
                  init_prepare_ds_add_ngram_minute_parser)
   _add_parser_to(subparsers, "prepare-ds-add-ngram-epochs",
@@ -407,11 +358,8 @@ def _init_parser():
   _add_parser_to(subparsers, "prepare-ds-add-ngram-cover",
                  init_prepare_ds_add_ngram_cover_parser)
   #_add_parser_to(subparsers, "prepare-ds-add-ngram-epochs",init_prepare_ds_add_greedy_ngram_epochs_parser)
-  _add_parser_to(subparsers, "prepare-ds-add-ngram-kld", init_prepare_ds_add_ngram_parser_legacy)
   _add_parser_to(subparsers, "prepare-ds-add-ngram-kld-minutes",
                  init_prepare_ds_add_ngrams_kld_minutes_parser)
-  _add_parser_to(subparsers, "prepare-ds-add-random-count",
-                 init_prepare_ds_add_random_count_parser_legacy)
   _add_parser_to(subparsers, "prepare-ds-add-random-percent",
                  init_prepare_ds_add_random_percent_parser)
   _add_parser_to(subparsers, "prepare-ds-get-random-minutes-divergence-seeds",

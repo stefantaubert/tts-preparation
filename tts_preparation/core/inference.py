@@ -1,4 +1,3 @@
-import random
 from dataclasses import dataclass
 from logging import Logger
 from math import ceil
@@ -9,8 +8,7 @@ from text_utils import (AccentsDict, EngToIpaMode, IPAExtractionSettings,
                         serialize_list, symbols_normalize, symbols_to_ipa,
                         text_to_sentences, text_to_symbols)
 from tts_preparation.globals import DEFAULT_PADDING_SYMBOL
-from tts_preparation.utils import (GenericList, console_out_len,
-                                   get_unique_items)
+from tts_preparation.utils import (GenericList, console_out_len, get_unique_items)
 
 
 def get_formatted_core(sent_id: int, symbols: List[str], accent_ids: List[int], max_pairs_per_line: int, space_length: int, accent_id_dict: AccentsDict) -> str:
