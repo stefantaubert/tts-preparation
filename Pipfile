@@ -22,6 +22,7 @@ audio-utils = {editable = true, ref = "master", git = "https://github.com/stefan
 image-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/image-utils.git"}
 speech-dataset-preprocessing = {editable = true, ref = "master", git = "https://github.com/stefantaubert/speech-dataset-preprocessing.git"}
 speech-dataset-parser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/speech-dataset-parser.git"}
+text-selection = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-selection.git"}
 
 [requires]
 python_version = "3.8"

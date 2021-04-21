@@ -5,7 +5,7 @@ from typing import Callable, Optional, Set, Tuple
 
 import pandas as pd
 from text_utils import SymbolIdDict
-from text_utils.text_selection.utils import get_total_number_of_common_elements
+from text_selection.utils import get_total_number_of_common_elements
 from tts_preparation.app.merge_ds import (get_merged_dir, load_merged_data,
                                           load_merged_speakers_json,
                                           load_merged_symbol_converter)

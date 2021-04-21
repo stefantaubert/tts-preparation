@@ -10,7 +10,7 @@ from speech_dataset_preprocessing import (DsDataList, MelDataList,
                                           TextDataList, WavDataList)
 from text_utils import (AccentsDict, Gender, Language, SpeakersDict,
                         SymbolIdDict, deserialize_list)
-from text_utils.text_selection import get_rarity_ngrams
+from text_selection import get_rarity_ngrams
 from tts_preparation.globals import (DEFAULT_PADDING_ACCENT,
                                      DEFAULT_PADDING_SYMBOL)
 from tts_preparation.utils import (GenericList, contains_only_allowed_symbols,

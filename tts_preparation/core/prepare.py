@@ -7,7 +7,7 @@ from typing import Set, Tuple
 import pandas as pd
 from ordered_set import OrderedSet
 from text_utils import SymbolIdDict
-from text_utils.text_selection import (cover_symbols_default,
+from text_selection import (cover_symbols_default,
                                        greedy_kld_uniform_ngrams_seconds,
                                        greedy_ngrams_cover,
                                        greedy_ngrams_epochs,

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "b116c1608fd305ef39dc59b16306bf3c5e53c6b3bde632b8deaf1e75c4e3d17e"
+            "sha256": "e2fa63c8a09e51e1f55ca3e95b89375ff5a764cac284199b8fd41483f289e09a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -22,14 +22,6 @@
                 "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"
             ],
             "version": "==1.4.4"
-        },
-        "attrs": {
-            "hashes": [
-                "sha256:31b2eced602aa8423c2aea9c76a724617ed67cf9513173fd3a4f03e3a929c7e6",
-                "sha256:832aa3cde19744e49938b91fea06d69ecb9e649c93ba974535d08ad92164f700"
-            ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==20.3.0"
         },
         "audio-utils": {
             "editable": true,
@@ -215,13 +207,6 @@
             ],
             "markers": "python_version >= '3.6'",
             "version": "==5.3.0"
-        },
-        "iniconfig": {
-            "hashes": [
-                "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3",
-                "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"
-            ],
-            "version": "==1.1.1"
         },
         "ipapy": {
             "hashes": [
@@ -505,14 +490,6 @@
             "markers": "python_version >= '3.6'",
             "version": "==8.2.0"
         },
-        "pluggy": {
-            "hashes": [
-                "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0",
-                "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"
-            ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==0.13.1"
-        },
         "pooch": {
             "hashes": [
                 "sha256:2cec8cbd0515462da1f84446113e77a785029b8514841e0ad344dd57f7924902",
@@ -520,14 +497,6 @@
             ],
             "markers": "python_version >= '3.6'",
             "version": "==1.3.0"
-        },
-        "py": {
-            "hashes": [
-                "sha256:21b81bda15b66ef5e1a777a21c4dcd9c20ad3efd0b3f817e7a809035269e1bd3",
-                "sha256:3b80836aa6d1feeaa108e046da6423ab8f6ceda6468545ae8d02d9d58d18818a"
-            ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==1.10.0"
         },
         "pycparser": {
             "hashes": [
@@ -544,14 +513,6 @@
             ],
             "markers": "python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==2.4.7"
-        },
-        "pytest": {
-            "hashes": [
-                "sha256:671238a46e4df0f3498d1c3270e5deb9b32d25134c99b7d75370a68cfbe9b634",
-                "sha256:6ad9c7bdf517a808242b998ac20063c41532a570d088d77eec1ee12b0b5574bc"
-            ],
-            "markers": "python_version >= '3.6'",
-            "version": "==6.2.3"
         },
         "python-dateutil": {
             "hashes": [
@@ -793,6 +754,12 @@
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==1.15.0"
         },
+        "sklearn": {
+            "hashes": [
+                "sha256:e23001573aa194b834122d2b9562459bf5ae494a2d59ca6b8aa22c85a44c0e31"
+            ],
+            "version": "==0.0"
+        },
         "soundfile": {
             "hashes": [
                 "sha256:2d17e0a6fc2af0d6c1d868bafa5ec80aae6e186a97fec8db07ad6af29842fbc7",
@@ -813,10 +780,15 @@
             "git": "https://github.com/stefantaubert/speech-dataset-preprocessing.git",
             "ref": "37bd650c88ff8b545d3f771ee6cfa8c5eb2dfbd5"
         },
+        "text-selection": {
+            "editable": true,
+            "git": "https://github.com/stefantaubert/text-selection.git",
+            "ref": "6f560a055e4a5db040f8814aca4c54ffb2746c8d"
+        },
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "751c7615c37e9fcf8afd8515fef64bc3d96b16ff"
+            "ref": "c93b1920169818f8c3ccf61ada96fd0e4f3d1d16"
         },
         "threadpoolctl": {
             "hashes": [
@@ -833,14 +805,6 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==2021.4.8"
-        },
-        "toml": {
-            "hashes": [
-                "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b",
-                "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"
-            ],
-            "markers": "python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==0.10.2"
         },
         "torch": {
             "hashes": [
