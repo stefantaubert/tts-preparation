@@ -14,6 +14,7 @@ from text_utils.text_selection import (cover_symbols_default,
                                        greedy_ngrams_cover,
                                        greedy_ngrams_epochs,
                                        greedy_ngrams_seconds,
+                                       n_divergent_random_seconds,
                                        random_ngrams_cover_seconds,
                                        random_percent, random_seconds,
                                        random_seconds_divergence_seeds)
@@ -107,6 +108,41 @@ def get_random_seconds_divergent_seeds(restset: PreparedDataList, symbols: Symbo
   )
 
   return selected_seeds
+
+
+def add_n_divergent_random_seconds(existing_set: PreparedDataList, restset: PreparedDataList, symbols: SymbolIdDict, seed: int, seconds: float, n: int) -> List[Tuple[PreparedDataList, PreparedDataList]]:
+  logger = getLogger(__name__)
+
+  new_datasets: List[Tuple[PreparedDataList, PreparedDataList]] = []
+
+  available_speaker_data = get_speaker_wise(restset)
+
+  for speaker_id, speaker_available in available_speaker_data.items():
+    speaker_available_dict = prep_data_list_to_dict_with_symbols(speaker_available, symbols)
+    speaker_avail_durations_s = prep_data_list_to_dict_with_durations_s(speaker_available)
+
+    selected_list_of_keys = n_divergent_random_seconds(
+      n=n,
+      seconds=seconds,
+      durations_s=speaker_avail_durations_s,
+      data=speaker_available_dict,
+      seed=seed,
+    )
+
+    for i, k in enumerate(selected_list_of_keys):
+      not_selected_keys = set(speaker_available_dict.keys()).difference(k)
+      selected_data = select_enties_from_prep_data(k, speaker_available)
+      not_selected_data = select_enties_from_prep_data(not_selected_keys, speaker_available)
+      assert len(selected_data) + len(not_selected_data) == len(speaker_available)
+
+      new_set = PreparedDataList(existing_set + selected_data)
+      new_restset = PreparedDataList(not_selected_data)
+      new_datasets.append((new_set, new_restset))
+
+      logger.info(
+        f"{i+1}/{n}: Took {len(selected_data)}/{len(speaker_available)} utterances from speaker {speaker_id} ({selected_data.get_total_duration_s()/60:.2f}min/{selected_data.get_total_duration_s()/60/60:.2f}h).")
+
+  return new_datasets
 
 
 def add_random_percent(existing_set: PreparedDataList, restset: PreparedDataList, symbols: SymbolIdDict, seed: int, percent: float) -> Tuple[PreparedDataList, PreparedDataList]:

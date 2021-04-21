@@ -13,7 +13,8 @@ from tts_preparation.app.prepare import (add_ngram, add_ngram_kld,
                                          add_random_count)
 from tts_preparation.app.prepare2 import (
     app_add_greedy_kld_ngram_minutes, app_add_greedy_ngram_epochs,
-    app_add_greedy_ngram_minutes, app_add_ngram_cover, app_add_random_minutes,
+    app_add_greedy_ngram_minutes, app_add_n_diverse_random_minutes,
+    app_add_ngram_cover, app_add_random_minutes,
     app_add_random_ngram_cover_minutes, app_add_random_percent, app_add_rest,
     app_add_symbols, app_get_random_seconds_divergent_seeds, app_prepare,
     print_and_save_stats)
@@ -118,6 +119,19 @@ def init_prepare_ds_add_random_percent_parser(parser: ArgumentParser):
                       type=DatasetType.__getitem__)
   parser.set_defaults(overwrite=True)
   return app_add_random_percent
+
+
+def init_prepare_ds_add_n_diverse_random_minutes(parser: ArgumentParser):
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--orig_prep_name', type=str, required=True)
+  parser.add_argument('--dest_prep_name', type=str, required=True)
+  parser.add_argument('--minutes', type=float, required=True)
+  parser.add_argument('--n', type=int)
+  parser.add_argument('--seed', type=int)
+  parser.add_argument('--dataset', choices=DatasetType,
+                      type=DatasetType.__getitem__)
+  parser.set_defaults(overwrite=True)
+  return app_add_n_diverse_random_minutes
 
 
 def init_prepare_ds_add_random_minutes(parser: ArgumentParser):
@@ -404,6 +418,8 @@ def _init_parser():
                  init_get_random_seconds_divergent_seeds_parser)
   _add_parser_to(subparsers, "prepare-ds-add-random-minutes",
                  init_prepare_ds_add_random_minutes)
+  _add_parser_to(subparsers, "prepare-ds-add-n-diverse-random-minutes",
+                 init_prepare_ds_add_n_diverse_random_minutes)
   _add_parser_to(subparsers, "prepare-ds-add-ngram-random-cover-minutes",
                  init_prepare_ds_add_random_ngram_cover_minutes_parser)
   _add_parser_to(subparsers, "prepare-ds-add-rest", init_prepare_ds_add_rest_parser)

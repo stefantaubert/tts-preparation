@@ -5,6 +5,7 @@ from typing import Callable, Optional, Set, Tuple
 
 import pandas as pd
 from text_utils import SymbolIdDict
+from text_utils.text_selection.utils import get_total_number_of_common_elements
 from tts_preparation.app.merge_ds import (get_merged_dir, load_merged_data,
                                           load_merged_speakers_json,
                                           load_merged_symbol_converter)
@@ -13,6 +14,7 @@ from tts_preparation.core.data import (DatasetType, PreparedData,
 from tts_preparation.core.prepare2 import (add_greedy_kld_ngram_seconds,
                                            add_greedy_ngram_epochs,
                                            add_greedy_ngram_seconds,
+                                           add_n_divergent_random_seconds,
                                            add_ngram_cover,
                                            add_random_ngram_cover_seconds,
                                            add_random_percent,
@@ -502,6 +504,49 @@ def app_add_greedy_ngram_minutes(base_dir: str, merge_name: str, orig_prep_name:
     seconds=minutes * 60,
     n_gram=n_gram,
   )
+
+
+def app_add_n_diverse_random_minutes(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, overwrite: bool, seed: int, minutes: float, n: int):
+  logger = getLogger(__name__)
+  logger.info(f"Adding utterances speaker-wise to {str(dataset)}...")
+  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+
+  orig_prep_dir = get_prep_dir(merge_dir, orig_prep_name, create=False)
+  symbols = load_merged_symbol_converter(merge_dir)
+
+  new_datasets = add_n_divergent_random_seconds(
+    existing_set=load_set(orig_prep_dir, dataset),
+    restset=load_restset(orig_prep_dir),
+    symbols=symbols,
+    seed=seed,
+    n=n,
+    seconds=minutes * 60,
+  )
+
+  dest_names = []
+  for i, (new_set, new_restset) in enumerate(new_datasets):
+    logger.info(f"Saving {i+1}/{len(new_datasets)}...")
+    dest_name = f"{dest_prep_name}_{i+1}"
+    dest_prep_dir = get_prep_dir(merge_dir, dest_name, create=False)
+    if not overwrite and os.path.isdir(dest_prep_dir):
+      logger.info(f"{dest_name} already exists. Skipping...")
+      continue
+    if dest_prep_dir != orig_prep_dir:
+      copy_orig_to_dest_dir(orig_prep_dir, dest_prep_dir)
+    _save_results(dest_prep_dir, new_set, new_restset, dataset)
+    logger.info(f"Saved to: {dest_name}")
+    _print_quick_stats(base_dir, merge_name, dest_name, logger)
+    dest_names.append(dest_name)
+
+  new_sets = [
+   {x.entry_id for x in load_trainset(
+    get_prep_dir(merge_dir, dest_name, create=False)).items()}
+      for dest_name in dest_names
+  ]
+
+  res = get_total_number_of_common_elements(new_sets)
+  logger.info(f"Overlapping entries: {res}")
+  logger.info("Done.")
 
 
 def app_add_greedy_ngram_epochs(base_dir: str, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, epochs: int, ignore_symbol_ids: Optional[Set[int]] = None, overwrite: bool = True):
