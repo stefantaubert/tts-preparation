@@ -9,7 +9,7 @@ from tts_preparation.app.inference import (accent_apply, accent_set, add_text,
 from tts_preparation.app.mapping import (create_or_update_inference_map_main,
                                          create_or_update_weights_map_main)
 from tts_preparation.app.merge_ds import ds_filter_symbols, merge_ds
-from tts_preparation.app.prepare2 import (
+from tts_preparation.app.prepare import (
     app_add_greedy_kld_ngram_minutes, app_add_greedy_ngram_epochs,
     app_add_greedy_ngram_minutes, app_add_n_diverse_random_minutes,
     app_add_ngram_cover, app_add_random_minutes,

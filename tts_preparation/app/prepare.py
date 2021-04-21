@@ -11,7 +11,7 @@ from tts_preparation.app.merge_ds import (get_merged_dir, load_merged_data,
                                           load_merged_symbol_converter)
 from tts_preparation.core.data import (DatasetType, PreparedData,
                                        PreparedDataList)
-from tts_preparation.core.prepare2 import (add_greedy_kld_ngram_seconds,
+from tts_preparation.core.prepare import (add_greedy_kld_ngram_seconds,
                                            add_greedy_ngram_epochs,
                                            add_greedy_ngram_seconds,
                                            add_n_divergent_random_seconds,
