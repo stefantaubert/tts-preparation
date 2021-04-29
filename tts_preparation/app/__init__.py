@@ -5,6 +5,6 @@ from tts_preparation.app.merge_ds import (get_merged_dir,
                                           load_merged_speakers_json,
                                           load_merged_symbol_converter)
 from tts_preparation.app.prepare import (get_prep_dir, load_testset,
-                                          load_trainset, load_valset)
+                                          load_trainset, load_valset, load_totalset)
 
 # from tts_preparation.app.merge_ds import load_merged_data
