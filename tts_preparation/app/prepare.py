@@ -4,24 +4,24 @@ from logging import Logger, getLogger
 from typing import Callable, Optional, Set, Tuple
 
 import pandas as pd
-from text_utils import SymbolIdDict
 from text_selection.utils import get_total_number_of_common_elements
+from text_utils import SymbolIdDict
 from tts_preparation.app.merge_ds import (get_merged_dir, load_merged_data,
                                           load_merged_speakers_json,
                                           load_merged_symbol_converter)
 from tts_preparation.core.data import (DatasetType, PreparedData,
                                        PreparedDataList)
 from tts_preparation.core.prepare import (add_greedy_kld_ngram_seconds,
-                                           add_greedy_ngram_epochs,
-                                           add_greedy_ngram_seconds,
-                                           add_n_divergent_random_seconds,
-                                           add_ngram_cover,
-                                           add_random_ngram_cover_seconds,
-                                           add_random_percent,
-                                           add_random_seconds, add_rest,
-                                           add_symbols, core_process_stats,
-                                           get_random_seconds_divergent_seeds,
-                                           prepare_core)
+                                          add_greedy_ngram_epochs,
+                                          add_greedy_ngram_seconds,
+                                          add_n_divergent_random_seconds,
+                                          add_ngram_cover,
+                                          add_random_ngram_cover_seconds,
+                                          add_random_percent,
+                                          add_random_seconds, add_rest,
+                                          add_symbols, core_process_stats,
+                                          get_random_seconds_divergent_seeds,
+                                          prepare_core)
 from tts_preparation.core.stats_speaker import (get_speaker_stats,
                                                 log_general_stats)
 from tts_preparation.core.stats_symbols import get_ngram_stats_df
@@ -159,7 +159,7 @@ def _load_threegram_stats(prep_dir: str) -> pd.DataFrame:
 
 def print_and_save_stats(base_dir: str, merge_name: str, prep_name: str):
   logger = getLogger(__name__)
-  _print_and_save_stats_main(base_dir, merge_name, prep_name, logger=logger)
+  _print_quick_stats(base_dir, merge_name, prep_name, logger=logger)
 
   merge_dir = get_merged_dir(base_dir, merge_name, create=False)
   merge_data = load_merged_data(merge_dir)
@@ -273,80 +273,6 @@ def _print_quick_stats(base_dir: str, merge_name: str, prep_name: str, logger: L
     merge_data=merge_data,
     logger=logger,
   )
-
-
-def _print_and_save_stats_main(base_dir: str, merge_name: str, prep_name: str, logger: Logger):
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  merge_data = load_merged_data(merge_dir)
-  prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
-  trainset = load_trainset(prep_dir) if os.path.isfile(
-    get_trainset_path(prep_dir)) else PreparedDataList()
-  testset = load_testset(prep_dir) if os.path.isfile(
-    get_testset_path(prep_dir)) else PreparedDataList()
-  valset = load_valset(prep_dir) if os.path.isfile(
-    get_valset_path(prep_dir)) else PreparedDataList()
-  restset = load_restset(prep_dir) if os.path.isfile(
-    get_restset_path(prep_dir)) else PreparedDataList()
-  symbols = load_merged_symbol_converter(merge_dir)
-  speakers = load_merged_speakers_json(merge_dir)
-
-  log_general_stats(
-    trainset=trainset,
-    valset=valset,
-    testset=testset,
-    restset=restset,
-    merge_data=merge_data,
-    logger=logger,
-  )
-
-  logger.info("Calculating speaker stats...")
-  speaker_stats = get_speaker_stats(
-    speakers=speakers,
-    symbols=symbols,
-    trainset=trainset,
-    valset=valset,
-    testset=testset,
-    restset=restset,
-  )
-  _save_speaker_stats(prep_dir, speaker_stats)
-
-  logger.info("Calculating onegram stats...")
-  onegram_stats = get_ngram_stats_df(
-    symbols=symbols,
-    trainset=trainset,
-    valset=valset,
-    testset=testset,
-    restset=restset,
-    n=1,
-    logger=logger,
-  )
-  _save_onegram_stats(prep_dir, onegram_stats)
-
-  logger.info("Calculating twogram stats...")
-  twogram_stats = get_ngram_stats_df(
-    symbols=symbols,
-    trainset=trainset,
-    valset=valset,
-    testset=testset,
-    restset=restset,
-    n=2,
-    logger=logger,
-  )
-  _save_twogram_stats(prep_dir, twogram_stats)
-
-  logger.info("Calculating threegram stats...")
-  threegram_stats = get_ngram_stats_df(
-    symbols=symbols,
-    trainset=trainset,
-    valset=valset,
-    testset=testset,
-    restset=restset,
-    n=3,
-    logger=logger,
-  )
-  _save_threegram_stats(prep_dir, threegram_stats)
-
-  logger.info("Done.")
 
 
 def app_prepare(base_dir: str, merge_name: str, prep_name: str, overwrite: bool = True):
