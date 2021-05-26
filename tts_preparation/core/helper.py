@@ -68,14 +68,14 @@ def dict_with_symbols_to_prep_data_list(d: Dict[int, List[int]], select_from: Pr
   return res
 
 
-def select_enties_from_dict(keys: Set[int], select_from: Dict) -> Dict:
+def select_entities_from_dict(keys: Set[int], select_from: Dict) -> Dict:
   keys_exist = len(keys.difference(select_from.keys())) == 0
   assert keys_exist
   res = {k: v for k, v in select_from.items() if k in keys}
   return res
 
 
-def select_enties_from_prep_data(keys: Set[int], select_from: PreparedDataList) -> PreparedDataList:
+def select_entities_from_prep_data(keys: Set[int], select_from: PreparedDataList) -> PreparedDataList:
   keys_exist = len(keys.difference(select_from.get_entry_ids())) == 0
   assert keys_exist
   res = PreparedDataList(item for item in select_from.items() if item.entry_id in keys)

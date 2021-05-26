@@ -1,16 +1,19 @@
 import os
 import shutil
 from logging import Logger, getLogger
+from statistics import mean
 from typing import Callable, Optional, Set, Tuple
 
 import pandas as pd
-from text_selection.utils import get_total_number_of_common_elements
+from text_selection.utils import (get_common_durations,
+                                  get_total_number_of_common_elements)
 from text_utils import SymbolIdDict
 from tts_preparation.app.merge_ds import (get_merged_dir, load_merged_data,
                                           load_merged_speakers_json,
                                           load_merged_symbol_converter)
 from tts_preparation.core.data import (DatasetType, PreparedData,
                                        PreparedDataList)
+from tts_preparation.core.helper import prep_data_list_to_dict_with_durations_s
 from tts_preparation.core.prepare import (add_greedy_kld_ngram_seconds,
                                           add_greedy_ngram_epochs,
                                           add_greedy_ngram_seconds,
@@ -470,8 +473,25 @@ def app_add_n_diverse_random_minutes(base_dir: str, merge_name: str, orig_prep_n
       for dest_name in dest_names
   ]
 
-  res = get_total_number_of_common_elements(new_sets)
-  logger.info(f"Overlapping entries: {res}")
+  total_set = load_totalset(orig_prep_dir)
+  durations_s = prep_data_list_to_dict_with_durations_s(total_set)
+
+  common_durations = get_common_durations(new_sets, durations_s)
+  logger.info("Overlapping")
+  for set_combi, common_duration_s in common_durations.items():
+    logger.info(
+      f"{set_combi}: {common_duration_s:.2f}s / {common_duration_s / 60:.2f}min / {common_duration_s / 60 / 60:.2f}h")
+
+  mean_s = mean(common_durations.values())
+  logger.info(
+    f"Average duration: {mean_s:.2f}s / {mean_s / 60:.2f}min / {mean_s / 60 / 60:.2f}h")
+  mean_dur = mean(durations_s.values())
+
+  common_elements = get_total_number_of_common_elements(new_sets)
+  logger.info(f"Entries: {common_elements}")
+  logger.info(f"Avg Entry Dur: {mean_dur:.2f}s")
+  avg_entries = common_elements / len(common_durations)
+  logger.info(f"Avg Entries: {avg_entries:.0f} = {avg_entries * mean_dur:.2f}s")
   logger.info("Done.")
 
 

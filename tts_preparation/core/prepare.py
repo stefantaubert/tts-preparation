@@ -6,21 +6,18 @@ from typing import Set, Tuple
 
 import pandas as pd
 from ordered_set import OrderedSet
-from text_utils import SymbolIdDict
 from text_selection import (cover_symbols_default,
-                                       greedy_kld_uniform_ngrams_seconds,
-                                       greedy_ngrams_cover,
-                                       greedy_ngrams_epochs,
-                                       greedy_ngrams_seconds,
-                                       n_divergent_random_seconds,
-                                       random_ngrams_cover_seconds,
-                                       random_percent, random_seconds,
-                                       random_seconds_divergence_seeds)
+                            greedy_kld_uniform_ngrams_seconds,
+                            greedy_ngrams_cover, greedy_ngrams_epochs,
+                            greedy_ngrams_seconds, n_divergent_random_seconds,
+                            random_ngrams_cover_seconds, random_percent,
+                            random_seconds, random_seconds_divergence_seeds)
+from text_utils import SymbolIdDict
 from tts_preparation.core.data import (DatasetType, PreparedDataList,
                                        get_speaker_wise)
 from tts_preparation.core.helper import (
     prep_data_list_to_dict_with_durations_s,
-    prep_data_list_to_dict_with_symbols, select_enties_from_prep_data)
+    prep_data_list_to_dict_with_symbols, select_entities_from_prep_data)
 from tts_preparation.core.merge_ds import MergedDataset
 from tts_preparation.core.stats_lvl2 import (get_one_gram_stats,
                                              get_three_gram_stats,
@@ -65,8 +62,8 @@ def __add(existing_set: PreparedDataList, restset: PreparedDataList, symbols: Sy
     )
 
     not_selected_keys = set(speaker_available_dict.keys()).difference(selected_keys)
-    selected_data = select_enties_from_prep_data(selected_keys, speaker_available)
-    not_selected_data = select_enties_from_prep_data(not_selected_keys, speaker_available)
+    selected_data = select_entities_from_prep_data(selected_keys, speaker_available)
+    not_selected_data = select_entities_from_prep_data(not_selected_keys, speaker_available)
     assert len(selected_data) + len(not_selected_data) == len(speaker_available)
 
     if len(selected_data) == 0:
@@ -129,8 +126,8 @@ def add_n_divergent_random_seconds(existing_set: PreparedDataList, restset: Prep
 
     for i, k in enumerate(selected_list_of_keys):
       not_selected_keys = set(speaker_available_dict.keys()).difference(k)
-      selected_data = select_enties_from_prep_data(k, speaker_available)
-      not_selected_data = select_enties_from_prep_data(not_selected_keys, speaker_available)
+      selected_data = select_entities_from_prep_data(k, speaker_available)
+      not_selected_data = select_entities_from_prep_data(not_selected_keys, speaker_available)
       assert len(selected_data) + len(not_selected_data) == len(speaker_available)
 
       new_set = PreparedDataList(existing_set + selected_data)

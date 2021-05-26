@@ -7,7 +7,7 @@ from tts_preparation.app.merge_ds import (get_merged_dir,
 from tts_preparation.app.prepare import get_prep_dir, load_valset
 from tts_preparation.core.data import PreparedDataList
 from tts_preparation.core.helper import (prep_data_list_to_dict_with_symbols,
-                                         select_enties_from_prep_data)
+                                         select_entities_from_prep_data)
 from tts_preparation.globals_debug import BASE_DIR
 
 merge_name = "txt_sel_exp"
@@ -44,7 +44,7 @@ sentence_dict = prep_data_list_to_dict_with_symbols(
 )
 
 res = greedy_ngrams_epochs(sentence_dict, n_gram=1, epochs=1, ignore_symbols=None)
-res_entries = select_enties_from_prep_data(res, valset)
+res_entries = select_entities_from_prep_data(res, valset)
 for x in res_entries.items():
   print(x.entry_id, x.text_original)
 
@@ -52,7 +52,7 @@ for i in res:
   sentence_dict.pop(i)
 
 res = greedy_ngrams_epochs(sentence_dict, n_gram=1, epochs=1, ignore_symbols=None)
-res_entries = select_enties_from_prep_data(res, valset)
+res_entries = select_entities_from_prep_data(res, valset)
 for x in res_entries.items():
   print(x.entry_id, x.text_original)
 
@@ -61,6 +61,6 @@ for i in res:
 
 
 res = greedy_ngrams_epochs(sentence_dict, n_gram=1, epochs=1, ignore_symbols=None)
-res_entries = select_enties_from_prep_data(res, valset)
+res_entries = select_entities_from_prep_data(res, valset)
 for x in res_entries.items():
   print(x.entry_id, x.text_original)
