@@ -16,13 +16,13 @@ pandas = "*"
 tqdm = "*"
 numpy = "*"
 Unidecode = "*"
-cmudict-parser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/cmudict-parser.git"}
-text-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-utils.git"}
-audio-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/audio-utils.git"}
-image-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/image-utils.git"}
-speech-dataset-preprocessing = {editable = true, ref = "master", git = "https://github.com/stefantaubert/speech-dataset-preprocessing.git"}
-speech-dataset-parser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/speech-dataset-parser.git"}
-text-selection = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-selection.git"}
+text-utils = {editable = true, path = "./../text-utils"}
+cmudict-parser = {editable = true, path = "./../cmudict-parser"}
+speech-dataset-preprocessing = {editable = true, path = "./../speech-dataset-preprocessing"}
+audio-utils = {editable = true, path = "./../audio-utils"}
+image-utils = {editable = true, path = "./../image-utils"}
+speech-dataset-parser = {editable = true, path = "./../speech-dataset-parser"}
+text-selection = {editable = true, path = "./../text-selection"}
 
 [requires]
 python_version = "3.8"
