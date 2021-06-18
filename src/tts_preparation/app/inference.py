@@ -122,7 +122,7 @@ def normalize_text(base_dir: str, merge_name: str, text_name: str):
     _check_for_unknown_symbols(base_dir, merge_name, text_name)
 
 
-def ipa_convert_text(base_dir: str, merge_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True, mode: Optional[EngToIpaMode] = None):
+def ipa_convert_text(base_dir: str, merge_name: str, text_name: str, ignore_tones: bool = False, ignore_arcs: bool = True, consider_ipa_annotations: bool = False, mode: Optional[EngToIpaMode] = None):
   logger = getLogger(__name__)
   merge_dir = get_merged_dir(base_dir, merge_name, create=False)
   text_dir = get_text_dir(merge_dir, text_name, create=False)
@@ -136,6 +136,7 @@ def ipa_convert_text(base_dir: str, merge_name: str, text_name: str, ignore_tone
       ignore_tones=ignore_tones,
       ignore_arcs=ignore_arcs,
       mode=mode,
+      consider_ipa_annotations=consider_ipa_annotations,
       logger=logger,
     )
     print("\n" + updated_sentences.get_formatted(

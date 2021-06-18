@@ -283,7 +283,7 @@ def update_symbols_and_text(sentences: SentenceList, sents_new_symbols: List[Lis
   return symbols, sentences
 
 
-def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[EngToIpaMode], logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
+def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[EngToIpaMode], consider_ipa_annotations: bool, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
 
   sents_new_symbols = []
   for sentence in sentences.items(True):
@@ -299,6 +299,7 @@ def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ig
       ignore_tones=ignore_tones,
       mode=mode,
       replace_unknown_with=DEFAULT_PADDING_SYMBOL,
+      consider_ipa_annotations=consider_ipa_annotations,
       logger=logger,
     )
     assert len(new_symbols) == len(new_accent_ids)
