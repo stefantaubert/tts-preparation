@@ -1,7 +1,10 @@
 import os
 from logging import getLogger
+from pathlib import Path
 from typing import List, Optional, Set
 
+from accent_analyser.app.main import load_probabilities
+from accent_analyser.core.rule_detection import check_probabilities_are_valid
 from text_utils import EngToIpaMode, Language, SymbolsMap
 from tts_preparation.app.io import (get_infer_map_path, infer_map_exists,
                                     load_text_symbol_converter,
@@ -15,6 +18,7 @@ from tts_preparation.core.inference import (AccentedSymbol, AccentedSymbolList,
 from tts_preparation.core.inference import add_text as infer_add
 from tts_preparation.core.inference import (sents_accent_apply,
                                             sents_accent_template,
+                                            sents_apply_mapping_table,
                                             sents_convert_to_ipa, sents_map,
                                             sents_normalize, set_accent)
 from tts_preparation.utils import get_subdir, get_subfolder_names, read_text
@@ -139,6 +143,37 @@ def ipa_convert_text(base_dir: str, merge_name: str, text_name: str, ignore_tone
       consider_ipa_annotations=consider_ipa_annotations,
       logger=logger,
     )
+    print("\n" + updated_sentences.get_formatted(
+      symbol_id_dict=symbol_ids,
+      accent_id_dict=load_merged_accents_ids(merge_dir)
+    ))
+    _save_text_csv(text_dir, updated_sentences)
+    save_text_symbol_converter(text_dir, symbol_ids)
+    _accent_template(base_dir, merge_name, text_name)
+    _check_for_unknown_symbols(base_dir, merge_name, text_name)
+
+
+def apply_mapping_table(base_dir: str, merge_name: str, text_name: str, mapping_table_path: Path, seed: int):
+  logger = getLogger(__name__)
+  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+  text_dir = get_text_dir(merge_dir, text_name, create=False)
+  if not os.path.isdir(text_dir):
+    logger.error("Please add text first.")
+  else:
+    logger.info("Converting text to IPA...")
+    mapping_table = load_probabilities(mapping_table_path)
+    # mapping_table_is_valid = check_probabilities_are_valid(mapping_table)
+    # if not mapping_table_is_valid:
+    #   logger.error("Mapping table is not valid!")
+    #   return
+
+    symbol_ids, updated_sentences = sents_apply_mapping_table(
+      sentences=load_text_csv(text_dir),
+      text_symbols=load_text_symbol_converter(text_dir),
+      mapping_table=mapping_table,
+      seed=seed,
+    )
+
     print("\n" + updated_sentences.get_formatted(
       symbol_id_dict=symbol_ids,
       accent_id_dict=load_merged_accents_ids(merge_dir)

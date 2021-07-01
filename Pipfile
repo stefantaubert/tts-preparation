@@ -10,6 +10,9 @@ pycodestyle = "*"
 isort = "*"
 pipenv-setup = "*"
 rope = "*"
+pytest = "*"
+pytest-xdist = "*"
+tts-preparation = {editable = true, path = "."}
 
 [packages]
 pandas = "*"
@@ -18,6 +21,7 @@ numpy = "*"
 Unidecode = "*"
 text-utils = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-utils.git"}
 speech-dataset-preprocessing = {editable = true, ref = "master", git = "https://github.com/stefantaubert/speech-dataset-preprocessing.git"}
+accent-analyser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/accent-analyser.git"}
 text-selection = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-selection.git"}
 
 [requires]

@@ -1,9 +1,11 @@
 import os
 from argparse import ArgumentParser
+from pathlib import Path
 
 from text_utils import EngToIpaMode, Language
 
 from tts_preparation.app.inference import (accent_apply, accent_set, add_text,
+                                           apply_mapping_table,
                                            ipa_convert_text, map_text,
                                            map_to_prep_symbols, normalize_text)
 from tts_preparation.app.mapping import (create_or_update_inference_map_main,
@@ -315,6 +317,14 @@ def init_convert_to_ipa_text_parser(parser: ArgumentParser):
   return ipa_convert_text
 
 
+def init_apply_mapping_table_parser(parser: ArgumentParser):
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  parser.add_argument('--mapping_table_path', type=Path, required=True)
+  parser.add_argument('--seed', type=int, required=True)
+  return apply_mapping_table
+
+
 def init_accent_apply_text_parser(parser: ArgumentParser):
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--text_name', type=str, required=True)
@@ -379,6 +389,7 @@ def _init_parser():
   _add_parser_to(subparsers, "inference-text-to-ipa", init_convert_to_ipa_text_parser)
   _add_parser_to(subparsers, "inference-text-set-accent", init_accent_set_text_parser)
   _add_parser_to(subparsers, "inference-text-apply-accents", init_accent_apply_text_parser)
+  _add_parser_to(subparsers, "inference-text-apply-mapping-table", init_apply_mapping_table_parser)
   _add_parser_to(subparsers, "inference-text-map", init_map_text_parser)
   _add_parser_to(subparsers, "inference-text-automap", init_map_to_prep_symbols_parser)
   _add_parser_to(subparsers, "inference-create-map", init_create_or_update_inference_map_parser)

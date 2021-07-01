@@ -1,14 +1,21 @@
+import random
 from dataclasses import dataclass
-from logging import Logger
+from logging import Logger, getLogger
 from math import ceil
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
+from accent_analyser import replace_with_prob
 from text_utils import (AccentsDict, EngToIpaMode, IPAExtractionSettings,
                         Language, SymbolIdDict, SymbolsMap, deserialize_list,
-                        serialize_list, symbols_normalize, symbols_to_ipa,
-                        text_to_sentences, text_to_symbols)
+                        sentence_to_words, serialize_list, strip_word,
+                        symbols_normalize, symbols_replace, symbols_to_ipa,
+                        symbols_to_lower, text_to_sentences, text_to_symbols,
+                        words_to_sentence)
 from tts_preparation.globals import DEFAULT_PADDING_SYMBOL
-from tts_preparation.utils import (GenericList, console_out_len, get_unique_items)
+from tts_preparation.utils import (GenericList, console_out_len,
+                                   get_unique_items)
+
+STRIP_SYMBOLS = list(".?!,;-:")
 
 
 def get_formatted_core(sent_id: int, symbols: List[str], accent_ids: List[int], max_pairs_per_line: int, space_length: int, accent_id_dict: AccentsDict) -> str:
@@ -176,8 +183,11 @@ class InferSentenceList(GenericList[InferSentence]):
       if model_symbols.has_unknown_symbols(sentence.symbols):
         sentence.symbols = model_symbols.replace_unknown_symbols_with_pad(
           sentence.symbols, pad_symbol=DEFAULT_PADDING_SYMBOL)
-        text = SymbolIdDict.symbols_to_text(sentence.symbols)
-        logger.info(f"Sentence {sentence.sent_id} contains unknown symbols: {text}")
+        text_to_print = SymbolIdDict.symbols_to_text(sentence.symbols)
+        text_to_print = text_to_print.replace(DEFAULT_PADDING_SYMBOL, "█")
+        unknown_count = text_to_print.count("█")
+        logger.info(
+          f"Sentence {sentence.sent_id} contains {unknown_count} unknown symbol(s) (█): {text_to_print}")
         unknown_symbols_exist = True
         assert len(sentence.symbols) == len(sentence.accents)
     return unknown_symbols_exist
@@ -267,6 +277,39 @@ def sents_normalize(sentences: SentenceList, text_symbols: SymbolIdDict, logger:
       logger=logger,
     )
     # TODO: check if new sentences resulted and then split them.
+    sentence.serialized_accents = serialize_list(new_accent_ids)
+    sents_new_symbols.append(new_symbols)
+
+  return update_symbols_and_text(sentences, sents_new_symbols)
+
+
+def sents_apply_mapping_table(sentences: SentenceList, text_symbols: SymbolIdDict, mapping_table: Dict[Tuple[str, ...], List[Tuple[Tuple[str, ...], float]]], seed: int) -> Tuple[SymbolIdDict, SentenceList]:
+  sents_new_symbols = []
+  logger = getLogger(__name__)
+  random.seed(seed)
+  for sentence in sentences.items():
+    symbols = text_symbols.get_symbols(sentence.serialized_symbols)
+    words = sentence_to_words(symbols)
+    replaced_words = []
+    for word in words:
+      stripped_word = strip_word(word, symbols=STRIP_SYMBOLS)
+      stripped_word_tuple = tuple(stripped_word)
+      if stripped_word_tuple in mapping_table:
+        replaced_word_tuple = replace_with_prob(stripped_word_tuple, mapping_table)
+        if stripped_word_tuple != replaced_word_tuple:
+          replaced_word = list(replaced_word_tuple)
+          # TODO: implement this function
+          word_replaced = symbols_replace(word, stripped_word, replaced_word, ignore_case=True)
+          replaced_words.append(word_replaced)
+          logger.info(
+            f"Mapped \"{''.join(word)}\" to \"{''.join(word_replaced)}\" in sentence {sentence.sent_id}.")
+        else:
+          replaced_words.append(word)
+      else:
+        replaced_words.append(word)
+    new_symbols = words_to_sentence(replaced_words)
+    accent_ids = sentence.get_accent_ids()
+    new_accent_ids = [accent_ids[0]] * len(new_symbols) if len(accent_ids) > 0 else []
     sentence.serialized_accents = serialize_list(new_accent_ids)
     sents_new_symbols.append(new_symbols)
 
