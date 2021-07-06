@@ -295,6 +295,8 @@ def init_add_text_parser(parser: ArgumentParser):
   parser.add_argument('--text', type=str, required=False)
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--text_name', type=str, required=True)
+  parser.add_argument('--ignore_tones', action='store_true')
+  parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--lang', choices=Language, type=Language.__getitem__, required=True)
   return add_text
 

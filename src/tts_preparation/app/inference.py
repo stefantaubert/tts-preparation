@@ -6,6 +6,7 @@ from typing import List, Optional, Set
 from accent_analyser.app.main import load_probabilities
 from accent_analyser.core.rule_detection import check_probabilities_are_valid
 from text_utils import EngToIpaMode, Language, SymbolsMap
+from text_utils.ipa2symb import IPAExtractionSettings
 from tts_preparation.app.io import (get_infer_map_path, infer_map_exists,
                                     load_text_symbol_converter,
                                     save_text_symbol_converter)
@@ -21,6 +22,7 @@ from tts_preparation.core.inference import (sents_accent_apply,
                                             sents_apply_mapping_table,
                                             sents_convert_to_ipa, sents_map,
                                             sents_normalize, set_accent)
+from tts_preparation.globals import DEFAULT_PADDING_SYMBOL
 from tts_preparation.utils import get_subdir, get_subfolder_names, read_text
 
 
@@ -73,7 +75,7 @@ def _save_accents_csv(text_dir: str, data: AccentedSymbolList):
   data.save(path)
 
 
-def add_text(base_dir: str, merge_name: str, text_name: str, filepath: Optional[str], lang: Language, text: Optional[str] = None):
+def add_text(base_dir: str, merge_name: str, text_name: str, filepath: Optional[str], lang: Language, ignore_arcs: bool, ignore_tones: bool, text: Optional[str] = None):
   assert text_name is not None and text_name != ""
   logger = getLogger(__name__)
   merge_dir = get_merged_dir(base_dir, merge_name, create=False)
@@ -87,9 +89,17 @@ def add_text(base_dir: str, merge_name: str, text_name: str, filepath: Optional[
       text_input = text
     else:
       text_input = read_text(filepath)
+
+    ipa_extraction_settings = IPAExtractionSettings(
+      ignore_arcs=ignore_arcs,
+      ignore_tones=ignore_tones,
+      replace_unknown_ipa_by=DEFAULT_PADDING_SYMBOL,
+    )
+
     symbol_ids, data = infer_add(
       text=text_input,
       lang=lang,
+      ipa_settings=ipa_extraction_settings,
       logger=logger,
     )
     print("\n" + data.get_formatted(

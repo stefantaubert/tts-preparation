@@ -215,7 +215,7 @@ class InferSentenceList(GenericList[InferSentence]):
     return res
 
 
-def add_text(text: str, lang: Language, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
+def add_text(text: str, lang: Language, ipa_settings: IPAExtractionSettings, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
   res = SentenceList()
   # each line is at least regarded as one sentence.
   lines = text.split("\n")
@@ -230,12 +230,6 @@ def add_text(text: str, lang: Language, logger: Logger) -> Tuple[SymbolIdDict, S
     all_sents.extend(sents)
 
   default_accent_id = 0
-  ipa_settings = IPAExtractionSettings(
-    ignore_tones=False,
-    ignore_arcs=False,
-    replace_unknown_ipa_by=DEFAULT_PADDING_SYMBOL,
-  )
-
   sents_symbols: List[List[str]] = [text_to_symbols(
     sent,
     lang=lang,
