@@ -11,7 +11,7 @@ from text_selection import (cover_symbols_default,
                             greedy_ngrams_cover, greedy_ngrams_epochs,
                             greedy_ngrams_seconds, n_divergent_random_seconds,
                             random_ngrams_cover_seconds, random_percent,
-                            random_seconds, random_seconds_divergence_seeds)
+                            random_seconds)
 from text_utils import SymbolIdDict
 from tts_preparation.core.data import (DatasetType, PreparedDataList,
                                        get_speaker_wise)
@@ -93,12 +93,12 @@ def get_random_seconds_divergent_seeds(restset: PreparedDataList, symbols: Symbo
   speaker_available_dict = prep_data_list_to_dict_with_symbols(speaker_available, symbols)
   speaker_avail_durations_s = prep_data_list_to_dict_with_durations_s(speaker_available)
 
-  selected_seeds = random_seconds_divergence_seeds(
+  selected_seeds = n_divergent_random_seconds(
     data=speaker_available_dict,
     seed=seed,
     durations_s=speaker_avail_durations_s,
     seconds=seconds,
-    samples=samples,
+    # samples=samples,
     n=n,
   )
 
