@@ -3,8 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import List, Optional, Set
 
-from accent_analyser.app.main import load_probabilities
-from accent_analyser.core.rule_detection import check_probabilities_are_valid
+from accent_analyser import check_probabilities_are_valid, load_probabilities
 from text_utils import EngToIpaMode, Language, SymbolsMap
 from text_utils.ipa2symb import IPAExtractionSettings
 from tts_preparation.app.io import (get_infer_map_path, infer_map_exists,
