@@ -19,7 +19,7 @@
         "accent-analyser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/accent-analyser.git",
-            "ref": "281866d78202b99f5b687ef072b03eb16f326541"
+            "ref": "642576300edc02826a59c772382e082ca7367976"
         },
         "appdirs": {
             "hashes": [
@@ -944,7 +944,7 @@
         "accent-analyser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/accent-analyser.git",
-            "ref": "281866d78202b99f5b687ef072b03eb16f326541"
+            "ref": "642576300edc02826a59c772382e082ca7367976"
         },
         "appdirs": {
             "hashes": [
