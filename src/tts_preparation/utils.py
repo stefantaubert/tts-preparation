@@ -17,7 +17,7 @@ import pandas as pd
 import wget
 from matplotlib.figure import Figure
 from scipy.spatial.distance import cosine
-from speech_dataset_preprocessing.globals import DEFAULT_CSV_SEPERATOR
+from tts_preparation.globals import DEFAULT_CSV_SEPERATOR
 from torch.optim.optimizer import \
     Optimizer  # pylint: disable=no-name-in-module
 from tqdm import tqdm
