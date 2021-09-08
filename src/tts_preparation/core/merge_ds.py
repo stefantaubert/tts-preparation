@@ -2,15 +2,16 @@ import os
 from collections import OrderedDict
 from dataclasses import dataclass
 from logging import Logger, getLogger
+from pathlib import Path
 from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple
 
-from speech_dataset_preprocessing import (DsDataList, MelDataList,
-                                          TextDataList, WavDataList)
+from speech_dataset_preprocessing import FinalDsEntry, FinalDsEntryList
+from text_selection import get_rarity_ngrams
 from text_utils import (AccentsDict, Gender, Language, SpeakersDict,
                         SymbolIdDict, deserialize_list)
-from text_selection import get_rarity_ngrams
+from text_utils.types import Speaker, Speakers
 from tts_preparation.globals import (DEFAULT_PADDING_ACCENT,
                                      DEFAULT_PADDING_SYMBOL)
 from tts_preparation.utils import (GenericList, contains_only_allowed_symbols,
@@ -20,40 +21,8 @@ ALL_SPEAKERS_INDICATOR = "all"
 
 
 @dataclass
-class DsDataset():
-  name: str
-  data: DsDataList
-  texts: TextDataList
-  wavs: WavDataList
-  mels: MelDataList
-  speakers: SpeakersDict
-  symbol_ids: SymbolIdDict
-  accent_ids: AccentsDict
-  absolute_mel_dir: str
-  absolute_wav_dir: str
-
-
-@dataclass
-class DsDatasetList(GenericList[DsDataset]):
-  pass
-
-
-@dataclass
 class MergedDatasetEntry():
-  entry_id: int
-  basename: str
-  speaker_id: int
-  text_original: str
-  text: str
-  serialized_symbol_ids: str
-  serialized_accent_ids: str
-  gender: Gender
-  lang: Language
-  absolute_wav_path: str
-  duration: float
-  sampling_rate: int
-  absolute_mel_path: str
-  n_mel_channels: int
+  final_entry: FinalDsEntry
   one_gram_rarity: float
   two_gram_rarity: float
   three_gram_rarity: float
@@ -70,27 +39,11 @@ class MergedDataset(GenericList[MergedDatasetEntry]):
       item.load_init()
 
   @classmethod
-  def init_from_ds_dataset(cls, ds: DsDataset):
+  def init_from_ds_dataset(cls, ds: FinalDsEntryList):
     res = cls()
-    for ds_data, text_data, wav_data, mel_data in zip(ds.data.items(), ds.texts.items(), ds.wavs.items(), ds.mels.items()):
-      absolute_wav_path = os.path.join(ds.absolute_wav_dir, wav_data.relative_wav_path)
-      absolute_mel_path = os.path.join(ds.absolute_mel_dir, mel_data.relative_mel_path)
-
+    for entry in ds.items():
       new_entry = MergedDatasetEntry(
-        entry_id=ds_data.entry_id,
-        gender=ds_data.gender,
-        basename=ds_data.basename,
-        speaker_id=ds_data.speaker_id,
-        lang=text_data.lang,
-        text_original=ds_data.text,
-        text=text_data.text,
-        serialized_accent_ids=text_data.serialized_accent_ids,
-        serialized_symbol_ids=text_data.serialized_symbol_ids,
-        absolute_wav_path=absolute_wav_path,
-        duration=wav_data.duration,
-        sampling_rate=wav_data.sr,
-        absolute_mel_path=absolute_mel_path,
-        n_mel_channels=mel_data.n_mel_channels,
+        final_entry=entry,
         one_gram_rarity=0,
         two_gram_rarity=0,
         three_gram_rarity=0,
@@ -99,14 +52,14 @@ class MergedDataset(GenericList[MergedDatasetEntry]):
       res.append(new_entry)
     return res
 
-  def get_total_duration_s(self):
-    durations = [x.duration for x in self.items()]
+  def get_total_duration_s(self) -> float:
+    durations = [entry.final_entry.wav_duration for entry in self.items()]
     total_duration = sum(durations)
     return total_duration
 
-  def get_ngram_rarity(self, symbols: SymbolIdDict, ngram: int) -> OrderedDictType[int, float]:
-    data_symbols_dict = OrderedDict({x.entry_id: symbols.get_symbols(
-      x.serialized_symbol_ids) for x in self.items()})
+  def get_ngram_rarity(self, ngram: int) -> OrderedDictType[int, float]:
+    data_symbols_dict = OrderedDict(
+      {x.final_entry.entry_id: x.final_entry.symbols for x in self.items()})
 
     rarity = get_rarity_ngrams(
       data=data_symbols_dict,
@@ -119,22 +72,16 @@ class MergedDataset(GenericList[MergedDatasetEntry]):
 
 
 class MergedDatasetContainer():
-  def __init__(self, data: MergedDataset, name: Optional[str], speaker_ids: SpeakersDict, symbol_ids: SymbolIdDict, accent_ids: AccentsDict) -> None:
+  def __init__(self, data: MergedDataset, name: Optional[str]) -> None:
     self.data = data
     self.name = name
-    self.symbol_ids = symbol_ids
-    self.accent_ids = accent_ids
-    self.speaker_ids = speaker_ids
 
   @classmethod
-  def init_from_ds_dataset(cls, ds: DsDataset):
+  def init_from_ds_dataset(cls, ds: FinalDsEntryList):
     data = MergedDataset.init_from_ds_dataset(ds)
     res = cls(
       data=data,
       name=ds.name,
-      speaker_ids=ds.speakers,
-      symbol_ids=ds.symbol_ids,
-      accent_ids=ds.accent_ids,
     )
     return res
 
@@ -275,7 +222,7 @@ class MergedDatasetContainerList():
     return new_speaker_ids
 
 
-def log_stats(data: MergedDataset, symbols: SymbolIdDict, accent_ids: AccentsDict, speakers: SpeakersDict, logger: Logger):
+def log_stats(data: MergedDataset, symbols: SymbolIdDict, accent_ids: AccentsDict, speakers: SpeakersDict):
   logger.info(f"Speakers ({len(speakers)}): {', '.join(sorted(speakers.get_all_speakers()))}")
   logger.info(f"Symbols ({len(symbols)}): {' '.join(sorted(symbols.get_all_symbols()))}")
   logger.info(f"Accents ({len(accent_ids)}): {', '.join(sorted(accent_ids.get_all_accents()))}")
@@ -285,25 +232,47 @@ def log_stats(data: MergedDataset, symbols: SymbolIdDict, accent_ids: AccentsDic
   # log texts and trainsets
 
 
-def _get_ds_speaker_ids(datasets: DsDatasetList, ds_speakers: List[Tuple[str, str]]) -> Dict[str, Set[int]]:
-  speakers_dict = {ds.name: ds.speakers.get_all_speakers() for ds in datasets.items()}
-  expanded_ds_speakers = expand_speakers(speakers_dict, ds_speakers)
+# def _get_ds_speaker_ids(datasets: List[Tuple[str, FinalDsEntryList]], ds_speakers: List[Tuple[str, Speaker]]) -> Dict[str, Set[Speaker]]:
+#   speakers_dict = {ds.name: ds.speakers.get_all_speakers() for ds in datasets.items()}
+#   expanded_ds_speakers = expand_speakers(speakers_dict, ds_speakers)
 
-  result: Dict[str, Set[int]] = {}
-  for ds_name, speaker_name in expanded_ds_speakers:
-    for ds in datasets.items():
-      if ds.name == ds_name:
-        ds_speaker_id = ds.speakers.get_id(speaker_name)
-        if ds_name not in result:
-          result[ds_name] = set()
-        result[ds_name] |= {ds_speaker_id}
-        break
+#   result: Dict[str, Set[Speaker]] = {}
+#   for ds_name, speaker_name in expanded_ds_speakers:
+#     for final_ds_name, final_ds_list in datasets.items():
+#       if final_ds_name == ds_name:
+#         if ds_name not in result:
+#           result[ds_name] = set()
+#         result[ds_name] |= {speaker_name}
+#         break
 
+#   return result
+
+
+def expand_speakers(speakers_to_ds_names: Dict[str, Speakers], ds_speakers: List[Tuple[str, Speaker]]) -> List[Tuple[str, Speaker]]:
+  # expand all
+  expanded_speakers: List[Tuple[str, Speaker]] = []
+  for ds_name, speaker_name in ds_speakers:
+    if ds_name not in speakers_to_ds_names:
+      continue
+    if speaker_name == ALL_SPEAKERS_INDICATOR:
+      expanded_speakers.extend([(ds_name, speaker) for speaker in speakers_to_ds_names[ds_name]])
+    else:
+      if speaker_name not in speakers_to_ds_names[ds_name]:
+        continue
+      expanded_speakers.append((ds_name, speaker_name))
+  expanded_speakers = list(sorted(set(expanded_speakers)))
+  return expanded_speakers
+
+
+def speakers(final_ds_list: FinalDsEntryList) -> Speakers:
+  result = {entry.speaker_name for entry in final_ds_list.items()}
   return result
 
 
-def merge(datasets: DsDatasetList, ds_speakers: List[Tuple[str, str]], logger: Logger) -> MergedDatasetContainer:
-  ds_sepaker_ids = _get_ds_speaker_ids(datasets, ds_speakers)
+def merge(datasets: List[Tuple[str, FinalDsEntryList]], ds_speakers: List[Tuple[str, Speaker]]) -> MergedDatasetContainer:
+  speakers_to_ds_name = {ds_name: speakers(data) for ds_name, data in datasets}
+  selected_ds_speakers = expand_speakers(speakers_to_ds_name, ds_speakers)
+  #ds_sepaker_ids = _get_ds_speaker_ids(datasets, ds_speakers)
 
   merged_datasets: List[MergedDatasetContainer] = []
   for ds in datasets.items():
@@ -331,22 +300,6 @@ def merge(datasets: DsDatasetList, ds_speakers: List[Tuple[str, str]], logger: L
   )
 
   return result
-
-
-def expand_speakers(speakers_dict: OrderedDictType[str, List[str]], ds_speakers: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
-  # expand all
-  expanded_speakers: List[Tuple[str, str]] = []
-  for ds_name, speaker_name in ds_speakers:
-    if ds_name not in speakers_dict:
-      continue
-    if speaker_name == ALL_SPEAKERS_INDICATOR:
-      expanded_speakers.extend([(ds_name, speaker) for speaker in speakers_dict[ds_name]])
-    else:
-      if speaker_name not in speakers_dict[ds_name]:
-        continue
-      expanded_speakers.append((ds_name, speaker_name))
-  expanded_speakers = list(sorted(set(expanded_speakers)))
-  return expanded_speakers
 
 
 def filter_symbols(data: MergedDataset, symbols: SymbolIdDict, accent_ids: AccentsDict, speakers: SpeakersDict, allowed_symbol_ids: Set[int], logger: Logger) -> MergedDatasetContainer:

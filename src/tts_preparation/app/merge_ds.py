@@ -10,7 +10,10 @@ from speech_dataset_preprocessing import (get_ds_dir, get_mel_dir,
                                           load_text_csv,
                                           load_text_symbol_converter,
                                           load_wav_csv)
+from speech_dataset_preprocessing.app.final import get_final_ds
+from speech_dataset_preprocessing.core.final import FinalDsEntryList
 from text_utils import AccentsDict, SpeakersDict, SymbolIdDict
+from text_utils.types import Speaker
 from tts_preparation.core.merge_ds import (DsDataset, DsDatasetList,
                                            MergedDataset, MergedDatasetEntry,
                                            filter_symbols, merge)
@@ -66,7 +69,7 @@ def save_merged_accents_ids(merge_dir: str, data: AccentsDict):
   data.save(path)
 
 
-def merge_ds(base_dir: str, sdp_dir: str, merge_name: str, ds_speakers: List[Tuple[str, str]], ds_text_audio: List[Tuple[str, str, str]], delete_existing: bool = True):
+def merge_ds(base_dir: str, sdp_dir: str, merge_name: str, ds_speakers: List[Tuple[str, Speaker]], ds_text_audio: List[Tuple[str, str, str]], delete_existing: bool = True):
   logger = getLogger(__name__)
   logger.info(f"Merging dataset: {merge_name}...")
   merge_dir = get_merged_dir(base_dir, merge_name)
@@ -75,34 +78,21 @@ def merge_ds(base_dir: str, sdp_dir: str, merge_name: str, ds_speakers: List[Tup
     logger.info("Already created.")
     return
 
-  datasets = DsDatasetList()
+  datasets: List[Tuple[str, FinalDsEntryList]] = []
   for ds_name, text_name, audio_name in ds_text_audio:
     # multiple uses of one ds are not valid
-
-    ds_dir = get_ds_dir(sdp_dir, ds_name)
-    text_dir = get_text_dir(ds_dir, text_name)
-    wav_dir = get_wav_dir(ds_dir, audio_name)
-    mel_dir = get_mel_dir(ds_dir, audio_name)
-
-    ds_dataset = DsDataset(
-      name=ds_name,
-      data=load_ds_csv(ds_dir),
-      texts=load_text_csv(text_dir),
-      wavs=load_wav_csv(wav_dir),
-      mels=load_mel_csv(mel_dir),
-      speakers=load_ds_speaker_json(ds_dir),
-      symbol_ids=load_text_symbol_converter(text_dir),
-      accent_ids=load_ds_accents_json(ds_dir),
-      absolute_wav_dir=wav_dir,
-      absolute_mel_dir=mel_dir,
+    final_data_list = get_final_ds(
+      base_dir=base_dir,
+      ds_name=ds_name,
+      text_name=text_name,
+      wav_name=audio_name,
     )
 
-    datasets.append(ds_dataset)
+    datasets.append((ds_name, final_data_list))
 
   merged_data = merge(
     datasets=datasets,
     ds_speakers=ds_speakers,
-    logger=logger,
   )
 
   if os.path.isdir(merge_dir):

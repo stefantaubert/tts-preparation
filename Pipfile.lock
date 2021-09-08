@@ -840,7 +840,7 @@
         },
         "sentence2pronunciation": {
             "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
-            "ref": "d1656f36fd7775ebbd10ce003a5ca22bb35be455"
+            "ref": "8716b3387e75f570bd929302099e766a2aa4ad9d"
         },
         "six": {
             "hashes": [
@@ -873,7 +873,7 @@
         "speech-dataset-preprocessing": {
             "editable": true,
             "git": "https://github.com/stefantaubert/speech-dataset-preprocessing.git",
-            "ref": "6720656f463d4b95f8ddaf8ac1b4c7f58086aa37"
+            "ref": "aa6ca1b0885b03c2ea35f94ed1c9edaa568b51eb"
         },
         "text-selection": {
             "editable": true,
@@ -2046,7 +2046,7 @@
         },
         "sentence2pronunciation": {
             "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
-            "ref": "d1656f36fd7775ebbd10ce003a5ca22bb35be455"
+            "ref": "8716b3387e75f570bd929302099e766a2aa4ad9d"
         },
         "six": {
             "hashes": [
@@ -2079,7 +2079,7 @@
         "speech-dataset-preprocessing": {
             "editable": true,
             "git": "https://github.com/stefantaubert/speech-dataset-preprocessing.git",
-            "ref": "6720656f463d4b95f8ddaf8ac1b4c7f58086aa37"
+            "ref": "aa6ca1b0885b03c2ea35f94ed1c9edaa568b51eb"
         },
         "text-selection": {
             "editable": true,
