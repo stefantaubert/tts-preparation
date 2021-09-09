@@ -1,59 +1,18 @@
 from collections import Counter, OrderedDict
 from copy import deepcopy
-from dataclasses import dataclass
 from functools import partial
 from logging import getLogger
-from pathlib import Path
-from typing import Dict, List, Optional
-from typing import OrderedDict as OrderedDictType
-from typing import Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from speech_dataset_preprocessing import FinalDsEntry, FinalDsEntryList
 from text_selection.metrics_export import get_rarity_ngrams
-from text_utils.gender import Gender
-from text_utils.language import Language
 from text_utils.speakers_dict import SpeakersDict
-from text_utils.symbol_format import SymbolFormat
 from text_utils.symbol_id_dict import SymbolIdDict
-from text_utils.types import (Speaker, SpeakerId, Symbol, SymbolIds,
-                              Symbols)
+from text_utils.types import Speaker, Symbol
+from tts_preparation.core.data import PreparedData, PreparedDataList
 from tts_preparation.globals import DEFAULT_PADDING_SYMBOL
-from tts_preparation.utils import GenericList
 
 ALL_SPEAKERS_INDICATOR = "all"
-
-
-@dataclass()
-class PreparedData:
-  entry_id: int
-  identifier: str
-  speaker_id: SpeakerId
-  speaker_name: Speaker
-  speaker_gender: Gender
-  symbol_ids: SymbolIds
-  symbols_language: Language
-  symbols_original: Symbols
-  symbols_original_format: SymbolFormat
-  symbols: Symbols
-  symbols_format: SymbolFormat
-  wav_original_absolute_path: Path
-  wav_absolute_path: Path
-  wav_duration: float
-  wav_sampling_rate: int
-  mel_absolute_path: Path
-  mel_n_channels: int
-  one_gram_rarity: float
-  two_gram_rarity: float
-  three_gram_rarity: float
-
-  @property
-  def combined_rarity(self) -> float:
-    return self.one_gram_rarity + self.two_gram_rarity + self.three_gram_rarity
-
-
-class PreparedDataList(GenericList[PreparedData]):
-  pass
-
 
 DsName = str
 
