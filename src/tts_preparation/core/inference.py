@@ -251,13 +251,13 @@ def add_text(text: str, lang: Language, ipa_settings: IPAExtractionSettings, log
   return symbols, res
 
 
-def set_accent(sentences: SentenceList, accent_ids: AccentsDict, accent: str) -> Tuple[SymbolIdDict, SentenceList]:
-  accent_id = accent_ids.get_id(accent)
-  for sentence in sentences.items():
-    new_accent_ids = [accent_id] * len(sentence.get_accent_ids())
-    sentence.serialized_accents = serialize_list(new_accent_ids)
-    assert len(sentence.get_accent_ids()) == len(sentence.get_symbol_ids())
-  return sentences
+# def set_accent(sentences: SentenceList, accent_ids: AccentsDict, accent: str) -> Tuple[SymbolIdDict, SentenceList]:
+#   accent_id = accent_ids.get_id(accent)
+#   for sentence in sentences.items():
+#     new_accent_ids = [accent_id] * len(sentence.get_accent_ids())
+#     sentence.serialized_accents = serialize_list(new_accent_ids)
+#     assert len(sentence.get_accent_ids()) == len(sentence.get_symbol_ids())
+#   return sentences
 
 
 def sents_normalize(sentences: SentenceList, text_symbols: SymbolIdDict, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
@@ -411,33 +411,33 @@ def sents_map(sentences: SentenceList, text_symbols: SymbolIdDict, symbols_map: 
 #   pass
 
 
-def sents_accent_template(sentences: SentenceList, text_symbols: SymbolIdDict, accent_ids: AccentsDict) -> AccentedSymbolList:
-  res = AccentedSymbolList()
-  for i, sent in enumerate(sentences.items()):
-    symbols = text_symbols.get_symbols(sent.serialized_symbols)
-    accents = accent_ids.get_accents(sent.serialized_accents)
-    for j, symbol_accent in enumerate(zip(symbols, accents)):
-      symbol, accent = symbol_accent
-      accented_symbol = AccentedSymbol(
-        position=f"{i}-{j}",
-        symbol=symbol,
-        accent=accent
-      )
-      res.append(accented_symbol)
-  return res
+# def sents_accent_template(sentences: SentenceList, text_symbols: SymbolIdDict, accent_ids: AccentsDict) -> AccentedSymbolList:
+#   res = AccentedSymbolList()
+#   for i, sent in enumerate(sentences.items()):
+#     symbols = text_symbols.get_symbols(sent.serialized_symbols)
+#     accents = accent_ids.get_accents(sent.serialized_accents)
+#     for j, symbol_accent in enumerate(zip(symbols, accents)):
+#       symbol, accent = symbol_accent
+#       accented_symbol = AccentedSymbol(
+#         position=f"{i}-{j}",
+#         symbol=symbol,
+#         accent=accent
+#       )
+#       res.append(accented_symbol)
+#   return res
 
 
-def sents_accent_apply(sentences: SentenceList, accented_symbols: AccentedSymbolList, accent_ids: AccentsDict) -> SentenceList:
-  current_index = 0
-  for sent in sentences.items():
-    accent_ids_count = len(deserialize_list(sent.serialized_accents))
-    assert len(accented_symbols) >= current_index + accent_ids_count
-    accented_symbol_selection: List[AccentedSymbol] = accented_symbols[current_index:current_index + accent_ids_count]
-    current_index += accent_ids_count
-    new_accent_ids = accent_ids.get_ids([x.accent for x in accented_symbol_selection])
-    sent.serialized_accents = serialize_list(new_accent_ids)
-    assert len(sent.get_accent_ids()) == len(sent.get_symbol_ids())
-  return sentences
+# def sents_accent_apply(sentences: SentenceList, accented_symbols: AccentedSymbolList, accent_ids: AccentsDict) -> SentenceList:
+#   current_index = 0
+#   for sent in sentences.items():
+#     accent_ids_count = len(deserialize_list(sent.serialized_accents))
+#     assert len(accented_symbols) >= current_index + accent_ids_count
+#     accented_symbol_selection: List[AccentedSymbol] = accented_symbols[current_index:current_index + accent_ids_count]
+#     current_index += accent_ids_count
+#     new_accent_ids = accent_ids.get_ids([x.accent for x in accented_symbol_selection])
+#     sent.serialized_accents = serialize_list(new_accent_ids)
+#     assert len(sent.get_accent_ids()) == len(sent.get_symbol_ids())
+#   return sentences
 
 
 def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, text_accents: AccentsDict, known_symbols: SymbolIdDict, logger: Logger) -> InferSentenceList:

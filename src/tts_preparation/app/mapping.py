@@ -1,9 +1,11 @@
 import os
 from logging import getLogger
-from typing import List, Optional
+from pathlib import Path
+from typing import Optional
 
 from text_utils import (SymbolsMap, create_or_update_inference_map,
                         create_or_update_weights_map)
+from text_utils.types import Symbols
 from tts_preparation.app.inference import get_all_symbols
 from tts_preparation.app.io import get_infer_map_path, infer_map_exists
 from tts_preparation.app.merge_ds import (get_merged_dir,
@@ -13,55 +15,55 @@ from tts_preparation.app.merge_ds import (get_merged_dir,
 INFER_MAP_SYMB_FN = "inference_map.symbols"
 
 
-def save_infer_map(merge_dir: str, infer_map: SymbolsMap):
+def save_infer_map(merge_dir: Path, infer_map: SymbolsMap):
   infer_map.save(get_infer_map_path(merge_dir))
 
 
-def load_infer_map(merge_dir: str) -> SymbolsMap:
+def load_infer_map(merge_dir: Path) -> SymbolsMap:
   return SymbolsMap.load(get_infer_map_path(merge_dir))
 
 
-def save_weights_map(merge_dir: str, orig_merge_name: str, weights_map: SymbolsMap):
-  path = os.path.join(merge_dir, f"{orig_merge_name}.json")
+def save_weights_map(merge_dir: Path, orig_merge_name: str, weights_map: SymbolsMap) -> None:
+  path = merge_dir / f"{orig_merge_name}.json"
   weights_map.save(path)
 
 
-def load_weights_map(merge_dir: str, orig_merge_name: str) -> SymbolsMap:
-  path = os.path.join(merge_dir, f"{orig_merge_name}.json")
+def load_weights_map(merge_dir: Path, orig_merge_name: str) -> SymbolsMap:
+  path = merge_dir / f"{orig_merge_name}.json"
   return SymbolsMap.load(path)
 
 
-def weights_map_exists(merge_dir: str, orig_merge_name: str) -> bool:
-  path = os.path.join(merge_dir, f"{orig_merge_name}.json")
+def weights_map_exists(merge_dir: Path, orig_merge_name: str) -> bool:
+  path = merge_dir / f"{orig_merge_name}.json"
   return os.path.isfile(path)
 
 
-def try_load_symbols_map(symbols_map_path: str) -> Optional[SymbolsMap]:
+def try_load_symbols_map(symbols_map_path: Path) -> Optional[SymbolsMap]:
   symbols_map = SymbolsMap.load(symbols_map_path) if symbols_map_path else None
   return symbols_map
 
 
-def get_infer_symbols_path(merge_dir: str) -> str:
-  path = os.path.join(merge_dir, INFER_MAP_SYMB_FN)
+def get_infer_symbols_path(merge_dir: Path) -> Path:
+  path = merge_dir / INFER_MAP_SYMB_FN
   return path
 
 
-def save_infer_symbols(merge_dir: str, symbols: List[str]):
+def save_infer_symbols(merge_dir: Path, symbols: Symbols):
   path = get_infer_symbols_path(merge_dir)
   save_symbols(path, symbols)
 
 
-def save_weights_symbols(merge_dir: str, weights_merge_name: str, symbols: List[str]):
-  path = os.path.join(merge_dir, f"{weights_merge_name}.symbols")
+def save_weights_symbols(merge_dir: Path, weights_merge_name: str, symbols: Symbols):
+  path = merge_dir / f"{weights_merge_name}.symbols"
   save_symbols(path, symbols)
 
 
-def save_symbols(path: str, symbols: List[str]):
-  with open(path, 'w', encoding='utf-8') as f:
-    f.write('\n'.join([f"\"{x}\"" for x in symbols]))
+def save_symbols(path: Path, symbols: Symbols):
+  with path.open(mode='w', encoding='utf-8') as f:
+    f.write('\n'.join([f"\"{symbol}\"" for symbol in symbols]))
 
 
-def create_or_update_weights_map_main(base_dir: str, merge_name: str, weights_merge_name: str, template_map: Optional[str] = None):
+def create_or_update_weights_map_main(base_dir: Path, merge_name: str, weights_merge_name: str, template_map: Optional[str] = None) -> None:
   merge_dir = get_merged_dir(base_dir, merge_name)
   assert os.path.isdir(merge_dir)
   orig_prep_dir = get_merged_dir(base_dir, weights_merge_name)
@@ -91,7 +93,7 @@ def create_or_update_weights_map_main(base_dir: str, merge_name: str, weights_me
   save_weights_symbols(merge_dir, weights_merge_name, symbols)
 
 
-def create_or_update_inference_map_main(base_dir: str, merge_name: str, template_map: Optional[str] = None):
+def create_or_update_inference_map_main(base_dir: Path, merge_name: str, template_map: Optional[Path] = None) -> None:
   logger = getLogger(__name__)
   logger.info("Creating/updating inference map...")
   merge_dir = get_merged_dir(base_dir, merge_name)

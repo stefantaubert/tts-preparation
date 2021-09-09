@@ -3,14 +3,12 @@ from logging import getLogger
 from pathlib import Path
 from typing import List, Optional, Set
 
-from accent_analyser import check_probabilities_are_valid, load_probabilities
-from text_utils import EngToIpaMode, Language, SymbolsMap
-from text_utils.ipa2symb import IPAExtractionSettings
+from accent_analyser import load_probabilities
+from text_utils import Language, SymbolsMap
 from tts_preparation.app.io import (get_infer_map_path, infer_map_exists,
                                     load_text_symbol_converter,
                                     save_text_symbol_converter)
 from tts_preparation.app.merge_ds import (get_merged_dir,
-                                          load_merged_accents_ids,
                                           load_merged_symbol_converter)
 from tts_preparation.core.inference import (AccentedSymbol, AccentedSymbolList,
                                             InferSentenceList, Sentence,
