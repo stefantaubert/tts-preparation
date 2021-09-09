@@ -1,14 +1,13 @@
-from logging import Logger
+from logging import getLogger
 from typing import Dict, List, Tuple
 
 import pandas as pd
 from text_utils import SymbolIdDict
 from text_utils.speakers_dict import SpeakersDict
-from text_utils.utils import deserialize_list
+from text_utils.types import Speaker, Speakers
 from tts_preparation.core.data import PreparedDataList, get_speaker_wise
 from tts_preparation.core.helper import (get_percent_str, get_shard_size,
                                          get_total_set)
-from tts_preparation.core.merge_ds import MergedDataset
 from tts_preparation.core.stats import (
     get_dist_among_other_symbols_df_of_all_symbols, get_dist_df,
     get_duration_df, get_max_df, get_mean_df, get_meta_dict, get_min_df,
@@ -16,7 +15,8 @@ from tts_preparation.core.stats import (
     get_rel_occ_df_of_all_symbols)
 
 
-def log_general_stats(trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList, merge_data: MergedDataset, logger: Logger):
+def log_general_stats(trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList, data: PreparedDataList):
+  logger = getLogger(__name__)
   total_set = get_total_set(trainset, valset, testset, restset)
   len_except_rest = len(trainset) + len(testset) + len(valset)
   logger.info(
@@ -28,15 +28,14 @@ def log_general_stats(trainset: PreparedDataList, valset: PreparedDataList, test
   logger.info(
     f"Size rest set: {len(restset)} ({restset.total_duration_s/60:.2f}m) --> {get_percent_str(len(restset), len(total_set))}")
   logger.info(f"Total: {len(total_set)} ({total_set.total_duration_s/60:.2f}m)")
-  logger.info(f"Original set: {len(merge_data)} ({merge_data.total_duration_s/60:.2f}m)")
-  logger.info(f"Something lost: {'no' if len(total_set) == len(merge_data) else 'yes!'}")
+  logger.info(f"Original set: {len(data)} ({data.total_duration_s/60:.2f}m)")
+  logger.info(f"Something lost: {'no' if len(total_set) == len(data) else 'yes!'}")
 
 
 def get_speaker_stats(symbols: SymbolIdDict, speakers: SpeakersDict, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList):
   speaker_order = list(sorted(speakers.get_all_speakers()))
   chars_dfs, chars = _get_chars_stats(
     speaker_order=speaker_order,
-    speakers=speakers,
     trainset=trainset,
     valset=valset,
     testset=testset,
@@ -53,7 +52,6 @@ def get_speaker_stats(symbols: SymbolIdDict, speakers: SpeakersDict, trainset: P
 
   utt_dfs = _get_speaker_occ_stats(
     speaker_order=speaker_order,
-    speakers=speakers,
     trainset=trainset,
     valset=valset,
     testset=testset,
@@ -63,7 +61,6 @@ def get_speaker_stats(symbols: SymbolIdDict, speakers: SpeakersDict, trainset: P
 
   duration_stats = _get_speaker_duration_stats(
     speaker_order=speaker_order,
-    speakers=speakers,
     trainset=trainset,
     valset=valset,
     testset=testset,
@@ -111,7 +108,7 @@ def get_speaker_stats(symbols: SymbolIdDict, speakers: SpeakersDict, trainset: P
   return speaker_stats
 
 
-def _get_chars_stats(speaker_order: List[str], speakers: SpeakersDict, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList) -> Tuple[Tuple[pd.DataFrame, ...], Tuple[Dict[str, List[int]], Dict[str, List[int]], Dict[str, List[int]], Dict[str, List[int]], Dict[str, List[int]]]]:
+def _get_chars_stats(speaker_order: Speakers, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList) -> Tuple[Tuple[pd.DataFrame, ...], Tuple[Dict[Speaker, List[int]], ...]]:
   total_set = get_total_set(trainset, valset, testset, restset)
   trn_speaker = get_speaker_wise(trainset)
   val_speaker = get_speaker_wise(valset)
@@ -125,22 +122,22 @@ def _get_chars_stats(speaker_order: List[str], speakers: SpeakersDict, trainset:
   rst_chars = {}
   tot_chars = {}
 
-  for speaker, speaker_id in speakers.items():
-    if speaker_id in trn_speaker:
-      trn_chars[speaker] = [len(deserialize_list(x.serialized_symbol_ids))
-                            for x in trn_speaker[speaker_id].items()]
-    if speaker_id in val_speaker:
-      val_chars[speaker] = [len(deserialize_list(x.serialized_symbol_ids))
-                            for x in val_speaker[speaker_id].items()]
-    if speaker_id in tst_speaker:
-      tst_chars[speaker] = [len(deserialize_list(x.serialized_symbol_ids))
-                            for x in tst_speaker[speaker_id].items()]
-    if speaker_id in rst_speaker:
-      rst_chars[speaker] = [len(deserialize_list(x.serialized_symbol_ids))
-                            for x in rst_speaker[speaker_id].items()]
-    if speaker_id in tot_speaker:
-      tot_chars[speaker] = [len(deserialize_list(x.serialized_symbol_ids))
-                            for x in tot_speaker[speaker_id].items()]
+  for speaker in speaker_order:
+    if speaker in trn_speaker:
+      trn_chars[speaker] = [len(entry.symbols)
+                            for entry in trn_speaker[speaker].items()]
+    if speaker in val_speaker:
+      val_chars[speaker] = [len(entry.symbols)
+                            for entry in val_speaker[speaker].items()]
+    if speaker in tst_speaker:
+      tst_chars[speaker] = [len(entry.symbols)
+                            for entry in tst_speaker[speaker].items()]
+    if speaker in rst_speaker:
+      rst_chars[speaker] = [len(entry.symbols)
+                            for entry in rst_speaker[speaker].items()]
+    if speaker in tot_speaker:
+      tot_chars[speaker] = [len(entry.symbols)
+                            for entry in tot_speaker[speaker].items()]
 
   meta_dataset = get_meta_dict(
     speakers=speaker_order,
@@ -201,7 +198,7 @@ def _get_chars_stats(speaker_order: List[str], speakers: SpeakersDict, trainset:
   return dfs, chars
 
 
-def _get_shards_stats(speaker_order: List[str], symbols: SymbolIdDict, chars: Tuple[Dict[str, List[int]], Dict[str, List[int]], Dict[str, List[int]], Dict[str, List[int]], Dict[str, List[int]]]) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _get_shards_stats(speaker_order: List[str], symbols: SymbolIdDict, chars: Tuple[Dict[str, List[int]], Dict[str, List[int]], Dict[str, List[int]], Dict[str, List[int]], Dict[str, List[int]]]) -> Tuple[pd.DataFrame, ...]:
   shard_size = get_shard_size(symbols)
   trn_chars, val_chars, tst_chars, rst_chars, tot_chars = chars
   trn_shards = {k: [x / shard_size for x in v] for k, v in trn_chars.items()}
@@ -266,11 +263,11 @@ def _get_shards_stats(speaker_order: List[str], symbols: SymbolIdDict, chars: Tu
   return shards_sum_count_df, shards_sum_percent_df, shards_sum_distribution_percent_df, shards_min_count_df, shards_max_count_df, shards_mean_count_df
 
 
-def _get_speaker_occ_stats(speaker_order: List[str], speakers: SpeakersDict, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList):
-  trn_speakers = [[speakers.get_speaker(x.speaker_id)] for x in trainset.items()]
-  val_speakers = [[speakers.get_speaker(x.speaker_id)] for x in valset.items()]
-  tst_speakers = [[speakers.get_speaker(x.speaker_id)] for x in testset.items()]
-  rst_speakers = [[speakers.get_speaker(x.speaker_id)] for x in restset.items()]
+def _get_speaker_occ_stats(speaker_order: Speakers, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList) -> Tuple[pd.DataFrame, ...]:
+  trn_speakers = [[x.speaker_name] for x in trainset.items()]
+  val_speakers = [[x.speaker_name] for x in valset.items()]
+  tst_speakers = [[x.speaker_name] for x in testset.items()]
+  rst_speakers = [[x.speaker_name] for x in restset.items()]
 
   utterances_count_df = get_occ_df_of_all_symbols(
     symbols=speaker_order,
@@ -302,7 +299,7 @@ def _get_speaker_occ_stats(speaker_order: List[str], speakers: SpeakersDict, tra
   return utterances_count_df, utterances_percent_df, utterances_distribution_percent_df
 
 
-def _get_speaker_duration_stats(speaker_order: List[str], speakers: SpeakersDict, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList):
+def _get_speaker_duration_stats(speaker_order: Speakers, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList) -> Tuple[pd.DataFrame, ...]:
   total_set = get_total_set(trainset, valset, testset, restset)
   trn_speaker = get_speaker_wise(trainset)
   val_speaker = get_speaker_wise(valset)
@@ -314,17 +311,18 @@ def _get_speaker_duration_stats(speaker_order: List[str], speakers: SpeakersDict
   tst_durations = {}
   rst_durations = {}
   tot_durations = {}
-  for speaker, speaker_id in speakers.items():
-    if speaker_id in trn_speaker:
-      trn_durations[speaker] = [x.duration_s for x in trn_speaker[speaker_id].items()]
-    if speaker_id in val_speaker:
-      val_durations[speaker] = [x.duration_s for x in val_speaker[speaker_id].items()]
-    if speaker_id in tst_speaker:
-      tst_durations[speaker] = [x.duration_s for x in tst_speaker[speaker_id].items()]
-    if speaker_id in rst_speaker:
-      rst_durations[speaker] = [x.duration_s for x in rst_speaker[speaker_id].items()]
-    if speaker_id in tot_speaker:
-      tot_durations[speaker] = [x.duration_s for x in tot_speaker[speaker_id].items()]
+
+  for speaker in speaker_order:
+    if speaker in trn_speaker:
+      trn_durations[speaker] = [entry.duration_s for entry in trn_speaker[speaker].items()]
+    if speaker in val_speaker:
+      val_durations[speaker] = [entry.duration_s for entry in val_speaker[speaker].items()]
+    if speaker in tst_speaker:
+      tst_durations[speaker] = [entry.duration_s for entry in tst_speaker[speaker].items()]
+    if speaker in rst_speaker:
+      rst_durations[speaker] = [entry.duration_s for entry in rst_speaker[speaker].items()]
+    if speaker in tot_speaker:
+      tot_durations[speaker] = [entry.duration_s for entry in tot_speaker[speaker].items()]
 
   meta_dataset = get_meta_dict(
     speakers=speaker_order,

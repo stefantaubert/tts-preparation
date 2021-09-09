@@ -1,9 +1,9 @@
-from logging import Logger
-from typing import List
+from logging import getLogger
+from typing import List, Tuple
 
 import pandas as pd
-from text_utils import SymbolIdDict
-from text_utils.text import get_ngrams
+from text_utils import get_ngrams
+from text_utils.types import Symbols
 from tts_preparation.core.data import PreparedDataList
 from tts_preparation.core.helper import get_total_set
 from tts_preparation.core.stats import (
@@ -15,17 +15,61 @@ from tts_preparation.core.stats import (
 FIRST_COL_NAME = "SYMBOL"
 
 
-def _get_ngram_stats_df_core(symbol_order: List[str], symbols: SymbolIdDict, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList, n: int, logger: Logger):
-  logger.info(f"Get {n}-grams...")
-  trn_symbols = [symbols.get_symbols(x.serialized_symbol_ids) for x in trainset.items()]
-  val_symbols = [symbols.get_symbols(x.serialized_symbol_ids) for x in valset.items()]
-  tst_symbols = [symbols.get_symbols(x.serialized_symbol_ids) for x in testset.items()]
-  rst_symbols = [symbols.get_symbols(x.serialized_symbol_ids) for x in restset.items()]
+def get_ngram_stats_df(trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList, n: int) -> pd.DataFrame:
+  total_set = get_total_set(trainset, valset, testset, restset)
+  logger = getLogger(__name__)
+  logger.info(f"Getting all {n}-gram stats...")
+  tot_symbols_list = [entry.symbols for entry in total_set.items()]
+  tot_symbols_one_gram_list = [get_ngrams(symbols, n=n) for symbols in tot_symbols_list]
+  symbol_order = list(
+    sorted({one_gram for one_grams in tot_symbols_one_gram_list for one_gram in one_grams}))
 
-  trn_symbols_one_gram = [get_ngrams(x, n=n) for x in trn_symbols]
-  val_symbols_one_gram = [get_ngrams(x, n=n) for x in val_symbols]
-  tst_symbols_one_gram = [get_ngrams(x, n=n) for x in tst_symbols]
-  rst_symbols_one_gram = [get_ngrams(x, n=n) for x in rst_symbols]
+  ngram_stats = _get_ngram_stats_df_core(
+    symbol_order=symbol_order,
+    trainset=trainset,
+    valset=valset,
+    testset=testset,
+    restset=restset,
+    n=n,
+  )
+  occurences_count_df, occurrences_percent_df, occurrences_distribution_percent_df, utterance_occurrences_count_df, utterance_occurrences_percent_df, uniform_occurrences_count_df, uniform_occurrences_percent_df = ngram_stats
+
+  symbol_dfs = []
+  symbol_dfs.append(occurences_count_df)
+  symbol_dfs.append(occurrences_percent_df)
+  symbol_dfs.append(occurrences_distribution_percent_df)
+  symbol_dfs.append(utterance_occurrences_count_df)
+  symbol_dfs.append(utterance_occurrences_percent_df)
+  symbol_dfs.append(uniform_occurrences_count_df)
+  symbol_dfs.append(uniform_occurrences_percent_df)
+
+  for i in range(1, len(symbol_dfs)):
+    symbol_dfs[i] = symbol_dfs[i].loc[:, symbol_dfs[i].columns != FIRST_COL_NAME]
+
+  symbol_stats = pd.concat(
+    symbol_dfs,
+    axis=1,
+    join='inner',
+  )
+
+  # symbol_stats = symbol_stats.round(decimals=2)
+  symbol_stats = symbol_stats.sort_values(by='TOTAL_OCCURRENCES_COUNT', ascending=False)
+  logger.info(symbol_stats)
+  return symbol_stats
+
+
+def _get_ngram_stats_df_core(symbol_order: List[Symbols], trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList, n: int) -> Tuple[pd.DataFrame, ...]:
+  logger = getLogger(__name__)
+  logger.info(f"Get {n}-grams...")
+  trn_symbols_list = [entry.symbols for entry in trainset.items()]
+  val_symbols_list = [entry.symbols for entry in valset.items()]
+  tst_symbols_list = [entry.symbols for entry in testset.items()]
+  rst_symbols_list = [entry.symbols for entry in restset.items()]
+
+  trn_symbols_one_gram = [get_ngrams(symbols, n=n) for symbols in trn_symbols_list]
+  val_symbols_one_gram = [get_ngrams(symbols, n=n) for symbols in val_symbols_list]
+  tst_symbols_one_gram = [get_ngrams(symbols, n=n) for symbols in tst_symbols_list]
+  rst_symbols_one_gram = [get_ngrams(symbols, n=n) for symbols in rst_symbols_list]
   logger.info("Get stats...")
 
   occurences_count_df = get_occ_df_of_all_symbols(
@@ -87,46 +131,3 @@ def _get_ngram_stats_df_core(symbol_order: List[str], symbols: SymbolIdDict, tra
   print(uniform_occurrences_percent_df)
 
   return occurences_count_df, occurrences_percent_df, occurrences_distribution_percent_df, utterance_occurrences_count_df, utterance_occurrences_percent_df, uniform_occurrences_count_df, uniform_occurrences_percent_df
-
-
-def get_ngram_stats_df(symbols: SymbolIdDict, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList, n: int, logger: Logger):
-  total_set = get_total_set(trainset, valset, testset, restset)
-  logger.info(f"Getting all {n}-gram stats...")
-  tot_symbols = [symbols.get_symbols(x.serialized_symbol_ids) for x in total_set.items()]
-  tot_symbols_one_gram = [get_ngrams(x, n=n) for x in tot_symbols]
-  symbol_order = list(sorted({x for y in tot_symbols_one_gram for x in y}))
-
-  ngram_stats = _get_ngram_stats_df_core(
-    symbol_order=symbol_order,
-    symbols=symbols,
-    trainset=trainset,
-    valset=valset,
-    testset=testset,
-    restset=restset,
-    n=n,
-    logger=logger,
-  )
-  occurences_count_df, occurrences_percent_df, occurrences_distribution_percent_df, utterance_occurrences_count_df, utterance_occurrences_percent_df, uniform_occurrences_count_df, uniform_occurrences_percent_df = ngram_stats
-
-  symbol_dfs = []
-  symbol_dfs.append(occurences_count_df)
-  symbol_dfs.append(occurrences_percent_df)
-  symbol_dfs.append(occurrences_distribution_percent_df)
-  symbol_dfs.append(utterance_occurrences_count_df)
-  symbol_dfs.append(utterance_occurrences_percent_df)
-  symbol_dfs.append(uniform_occurrences_count_df)
-  symbol_dfs.append(uniform_occurrences_percent_df)
-
-  for i in range(1, len(symbol_dfs)):
-    symbol_dfs[i] = symbol_dfs[i].loc[:, symbol_dfs[i].columns != FIRST_COL_NAME]
-
-  symbol_stats = pd.concat(
-    symbol_dfs,
-    axis=1,
-    join='inner',
-  )
-
-  # symbol_stats = symbol_stats.round(decimals=2)
-  symbol_stats = symbol_stats.sort_values(by='TOTAL_OCCURRENCES_COUNT', ascending=False)
-  print(symbol_stats)
-  return symbol_stats
