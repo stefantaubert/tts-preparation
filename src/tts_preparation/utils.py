@@ -1,3 +1,4 @@
+import pickle
 import json
 import logging
 import math
@@ -17,10 +18,11 @@ import pandas as pd
 import wget
 from matplotlib.figure import Figure
 from scipy.spatial.distance import cosine
-from tts_preparation.globals import DEFAULT_CSV_SEPERATOR
 from torch.optim.optimizer import \
     Optimizer  # pylint: disable=no-name-in-module
 from tqdm import tqdm
+
+from tts_preparation.globals import DEFAULT_CSV_SEPERATOR
 
 _T = TypeVar('_T')
 PYTORCH_EXT = ".pt"
@@ -419,8 +421,8 @@ def str_to_int(val: str) -> int:
   return res
 
 
-def get_subdir(training_dir_path: str, subdir: str, create: bool = True) -> str:
-  result = os.path.join(training_dir_path, subdir)
+def get_subdir(training_dir_path: Path, subdir: str, create: bool = True) -> Path:
+  result = training_dir_path / subdir
   if create:
     os.makedirs(result, exist_ok=True)
   return result
@@ -475,3 +477,15 @@ def read_lines(path: str) -> List[str]:
 def read_text(path: str) -> str:
   res = '\n'.join(read_lines(path))
   return res
+
+
+def save_obj(obj: Any, path: Path) -> None:
+  assert path.parent.exists() and path.parent.is_dir()
+  with open(path, mode="wb") as file:
+    pickle.dump(obj, file)
+
+
+def load_obj(path: Path) -> Any:
+  assert path.exists() and path.is_file()
+  with open(path, mode="rb") as file:
+    return pickle.load(file)

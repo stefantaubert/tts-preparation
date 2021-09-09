@@ -873,7 +873,7 @@
         "speech-dataset-preprocessing": {
             "editable": true,
             "git": "https://github.com/stefantaubert/speech-dataset-preprocessing.git",
-            "ref": "aa6ca1b0885b03c2ea35f94ed1c9edaa568b51eb"
+            "ref": "42ade129cdc7651817e93fdd0858f3dce25abf3f"
         },
         "text-selection": {
             "editable": true,
@@ -883,7 +883,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "4a0ac6260c3c344369bcbb580201e3ec5a2ac2d9"
+            "ref": "432e8f71360a1e65884b1903b418933ae2d622a7"
         },
         "threadpoolctl": {
             "hashes": [
@@ -2079,7 +2079,7 @@
         "speech-dataset-preprocessing": {
             "editable": true,
             "git": "https://github.com/stefantaubert/speech-dataset-preprocessing.git",
-            "ref": "aa6ca1b0885b03c2ea35f94ed1c9edaa568b51eb"
+            "ref": "42ade129cdc7651817e93fdd0858f3dce25abf3f"
         },
         "text-selection": {
             "editable": true,
@@ -2089,7 +2089,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "4a0ac6260c3c344369bcbb580201e3ec5a2ac2d9"
+            "ref": "432e8f71360a1e65884b1903b418933ae2d622a7"
         },
         "threadpoolctl": {
             "hashes": [

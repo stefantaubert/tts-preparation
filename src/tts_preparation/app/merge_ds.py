@@ -1,88 +1,68 @@
-import os
 import shutil
 from logging import getLogger
+from pathlib import Path
 from typing import List, Set, Tuple
 
-from speech_dataset_preprocessing import (get_ds_dir, get_mel_dir,
-                                          get_text_dir, get_wav_dir,
-                                          load_ds_accents_json, load_ds_csv,
-                                          load_ds_speaker_json, load_mel_csv,
-                                          load_text_csv,
-                                          load_text_symbol_converter,
-                                          load_wav_csv)
-from speech_dataset_preprocessing.app.final import get_final_ds
+from speech_dataset_preprocessing import get_final_ds
 from speech_dataset_preprocessing.core.final import FinalDsEntryList
-from text_utils import AccentsDict, SpeakersDict, SymbolIdDict
-from text_utils.types import Speaker
-from tts_preparation.core.merge_ds import (DsDataset, DsDatasetList,
-                                           MergedDataset, MergedDatasetEntry,
-                                           filter_symbols, merge)
-from tts_preparation.utils import get_subdir
+from text_utils import SpeakersDict, SymbolIdDict
+from text_utils.types import Speaker, Symbol
+from tts_preparation.core.merge_ds import (DsName, PreparedDataList, merge,
+                                           remove_unwanted_symbols)
+from tts_preparation.utils import get_subdir, load_obj, save_obj
 
 _merge_data_csv = "data.csv"
 _merge_speakers_json = "speakers.json"
 _merge_symbols_json = "symbols.json"
-_merge_accents_json = "accents.json"
 
 
-def get_merged_dir(base_dir: str, merge_name: str, create: bool = False):
+def get_merged_dir(base_dir: Path, merge_name: str, create: bool = False) -> Path:
   return get_subdir(base_dir, merge_name, create)
 
 
-def load_merged_data(merge_dir: str) -> MergedDataset:
-  path = os.path.join(merge_dir, _merge_data_csv)
-  return MergedDataset.load(MergedDatasetEntry, path)
+def load_merged_data(merge_dir: Path) -> PreparedDataList:
+  path = merge_dir / _merge_data_csv
+  return load_obj(path)
 
 
-def save_merged_data(merge_dir: str, result: MergedDataset):
-  path = os.path.join(merge_dir, _merge_data_csv)
-  result.save(path)
+def save_merged_data(merge_dir: Path, result: PreparedDataList) -> None:
+  path = merge_dir / _merge_data_csv
+  save_obj(result, path)
 
 
-def load_merged_speakers_json(merge_dir: str) -> SpeakersDict:
-  path = os.path.join(merge_dir, _merge_speakers_json)
+def load_merged_speakers_json(merge_dir: Path) -> SpeakersDict:
+  path = merge_dir / _merge_speakers_json
   return SpeakersDict.load(path)
 
 
-def save_merged_speakers_json(merge_dir: str, speakers: SpeakersDict):
-  path = os.path.join(merge_dir, _merge_speakers_json)
+def save_merged_speakers_json(merge_dir: Path, speakers: SpeakersDict):
+  path = merge_dir / _merge_speakers_json
   speakers.save(path)
 
 
-def load_merged_symbol_converter(merge_dir: str) -> SymbolIdDict:
-  path = os.path.join(merge_dir, _merge_symbols_json)
+def load_merged_symbol_converter(merge_dir: Path) -> SymbolIdDict:
+  path = merge_dir / _merge_symbols_json
   return SymbolIdDict.load_from_file(path)
 
 
-def save_merged_symbol_converter(merge_dir: str, data: SymbolIdDict):
-  path = os.path.join(merge_dir, _merge_symbols_json)
+def save_merged_symbol_converter(merge_dir: Path, data: SymbolIdDict) -> None:
+  path = merge_dir / _merge_symbols_json
   data.save(path)
 
 
-def load_merged_accents_ids(merge_dir: str) -> AccentsDict:
-  path = os.path.join(merge_dir, _merge_accents_json)
-  return AccentsDict.load(path)
-
-
-def save_merged_accents_ids(merge_dir: str, data: AccentsDict):
-  path = os.path.join(merge_dir, _merge_accents_json)
-  data.save(path)
-
-
-def merge_ds(base_dir: str, sdp_dir: str, merge_name: str, ds_speakers: List[Tuple[str, Speaker]], ds_text_audio: List[Tuple[str, str, str]], delete_existing: bool = True):
+def merge_ds(base_dir: Path, sdp_dir: Path, merge_name: str, ds_speakers: List[Tuple[DsName, Speaker]], ds_text_audio: List[Tuple[DsName, str, str]], overwrite: bool = True) -> None:
   logger = getLogger(__name__)
   logger.info(f"Merging dataset: {merge_name}...")
-  merge_dir = get_merged_dir(base_dir, merge_name)
+  dest_merge_dir = get_merged_dir(base_dir, merge_name)
 
-  if os.path.isdir(merge_dir) and not delete_existing:
+  if dest_merge_dir.is_dir() and dest_merge_dir.exists() and not overwrite:
     logger.info("Already created.")
     return
 
-  datasets: List[Tuple[str, FinalDsEntryList]] = []
-  for ds_name, text_name, audio_name in ds_text_audio:
-    # multiple uses of one ds are not valid
+  datasets: List[Tuple[DsName, FinalDsEntryList]] = []
+  for ds_name, text_name, audio_name in set(ds_text_audio):
     final_data_list = get_final_ds(
-      base_dir=base_dir,
+      base_dir=sdp_dir,
       ds_name=ds_name,
       text_name=text_name,
       wav_name=audio_name,
@@ -90,47 +70,51 @@ def merge_ds(base_dir: str, sdp_dir: str, merge_name: str, ds_speakers: List[Tup
 
     datasets.append((ds_name, final_data_list))
 
-  merged_data = merge(
+  dest_data, dest_symbol_ids_dict, dest_speaker_ids_dict = merge(
     datasets=datasets,
     ds_speakers=ds_speakers,
   )
 
-  if os.path.isdir(merge_dir):
-    shutil.rmtree(merge_dir)
-  os.makedirs(merge_dir)
-  save_merged_data(merge_dir, merged_data.data)
-  save_merged_symbol_converter(merge_dir, merged_data.symbol_ids)
-  save_merged_accents_ids(merge_dir, merged_data.accent_ids)
-  save_merged_speakers_json(merge_dir, merged_data.speaker_ids)
+  assert overwrite
+  if dest_merge_dir.is_dir():
+    shutil.rmtree(dest_merge_dir)
+  dest_merge_dir.mkdir(parents=True, exist_ok=False)
+
+  save_merged_data(dest_merge_dir, dest_data)
+  save_merged_symbol_converter(dest_merge_dir, dest_symbol_ids_dict)
+  save_merged_speakers_json(dest_merge_dir, dest_speaker_ids_dict)
+  logger.info("Done.")
 
 
-def ds_filter_symbols(base_dir: str, orig_merge_name: str, dest_merge_name: str, allowed_symbol_ids: Set[int], overwrite: bool = True):
+def ds_filter_symbols(base_dir: str, orig_merge_name: str, dest_merge_name: str, allowed_symbols: Set[Symbol], overwrite: bool = True):
   logger = getLogger(__name__)
   dest_merge_dir = get_merged_dir(base_dir, dest_merge_name)
 
-  if os.path.isdir(dest_merge_dir) and not overwrite:
+  if dest_merge_dir.is_dir() and dest_merge_dir.exists() and not overwrite:
     logger.info("Already created.")
     return
 
-  merge_dir = get_merged_dir(base_dir, orig_merge_name)
-  accents = load_merged_accents_ids(merge_dir)
-  symbols = load_merged_symbol_converter(merge_dir)
-  speakers = load_merged_speakers_json(merge_dir)
-  data = load_merged_data(merge_dir)
+  orig_merge_dir = get_merged_dir(base_dir, orig_merge_name)
+  orig_data = load_merged_data(orig_merge_dir)
 
-  resulting_data = filter_symbols(
-    data=data,
-    symbols=symbols,
-    accent_ids=accents,
-    speakers=speakers,
-    allowed_symbol_ids=allowed_symbol_ids,
-    logger=logger,
+  result = remove_unwanted_symbols(
+    data=orig_data,
+    allowed_symbols=allowed_symbols,
   )
 
-  if os.path.isdir(dest_merge_dir):
+  if result is None:
+    dest_data = orig_data
+    dest_symbol_ids_dict = load_merged_symbol_converter(orig_merge_dir)
+    dest_speaker_ids_dict = load_merged_symbol_converter(orig_merge_dir)
+  else:
+    dest_data, dest_symbol_ids_dict, dest_speaker_ids_dict = result
+
+  assert overwrite
+  if dest_merge_dir.is_dir():
     shutil.rmtree(dest_merge_dir)
-  os.makedirs(dest_merge_dir)
-  save_merged_data(dest_merge_dir, resulting_data.data)
-  save_merged_symbol_converter(dest_merge_dir, resulting_data.symbol_ids)
-  save_merged_accents_ids(dest_merge_dir, resulting_data.accent_ids)
-  save_merged_speakers_json(dest_merge_dir, resulting_data.speaker_ids)
+  dest_merge_dir.mkdir(parents=True, exist_ok=False)
+
+  save_merged_data(dest_merge_dir, dest_data)
+  save_merged_symbol_converter(dest_merge_dir, dest_symbol_ids_dict)
+  save_merged_speakers_json(dest_merge_dir, dest_speaker_ids_dict)
+  logger.info("Done.")

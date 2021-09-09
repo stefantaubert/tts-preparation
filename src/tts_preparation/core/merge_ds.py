@@ -1,383 +1,269 @@
-import os
-from collections import OrderedDict
+from collections import Counter, OrderedDict
+from copy import deepcopy
 from dataclasses import dataclass
-from logging import Logger, getLogger
+from functools import partial
+from logging import getLogger
 from pathlib import Path
 from typing import Dict, List, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Set, Tuple
 
 from speech_dataset_preprocessing import FinalDsEntry, FinalDsEntryList
-from text_selection import get_rarity_ngrams
-from text_utils import (AccentsDict, Gender, Language, SpeakersDict,
-                        SymbolIdDict, deserialize_list)
-from text_utils.types import Speaker, Speakers
-from tts_preparation.globals import (DEFAULT_PADDING_ACCENT,
-                                     DEFAULT_PADDING_SYMBOL)
-from tts_preparation.utils import (GenericList, contains_only_allowed_symbols,
-                                   get_counter)
+from text_selection.metrics_export import get_rarity_ngrams
+from text_utils.gender import Gender
+from text_utils.language import Language
+from text_utils.speakers_dict import SpeakersDict
+from text_utils.symbol_format import SymbolFormat
+from text_utils.symbol_id_dict import SymbolIdDict
+from text_utils.types import (Speaker, SpeakerId, Symbol, SymbolIds,
+                              Symbols)
+from tts_preparation.globals import DEFAULT_PADDING_SYMBOL
+from tts_preparation.utils import GenericList
 
 ALL_SPEAKERS_INDICATOR = "all"
 
 
-@dataclass
-class MergedDatasetEntry():
-  final_entry: FinalDsEntry
+@dataclass()
+class PreparedData:
+  entry_id: int
+  identifier: str
+  speaker_id: SpeakerId
+  speaker_name: Speaker
+  speaker_gender: Gender
+  symbol_ids: SymbolIds
+  symbols_language: Language
+  symbols_original: Symbols
+  symbols_original_format: SymbolFormat
+  symbols: Symbols
+  symbols_format: SymbolFormat
+  wav_original_absolute_path: Path
+  wav_absolute_path: Path
+  wav_duration: float
+  wav_sampling_rate: int
+  mel_absolute_path: Path
+  mel_n_channels: int
   one_gram_rarity: float
   two_gram_rarity: float
   three_gram_rarity: float
-  combined_rarity: float
 
-  def load_init(self):
-    self.lang = Language(self.lang)
-    self.gender = Gender(self.gender)
-
-
-class MergedDataset(GenericList[MergedDatasetEntry]):
-  def load_init(self):
-    for item in self.items():
-      item.load_init()
-
-  @classmethod
-  def init_from_ds_dataset(cls, ds: FinalDsEntryList):
-    res = cls()
-    for entry in ds.items():
-      new_entry = MergedDatasetEntry(
-        final_entry=entry,
-        one_gram_rarity=0,
-        two_gram_rarity=0,
-        three_gram_rarity=0,
-        combined_rarity=0,
-      )
-      res.append(new_entry)
-    return res
-
-  def get_total_duration_s(self) -> float:
-    durations = [entry.final_entry.wav_duration for entry in self.items()]
-    total_duration = sum(durations)
-    return total_duration
-
-  def get_ngram_rarity(self, ngram: int) -> OrderedDictType[int, float]:
-    data_symbols_dict = OrderedDict(
-      {x.final_entry.entry_id: x.final_entry.symbols for x in self.items()})
-
-    rarity = get_rarity_ngrams(
-      data=data_symbols_dict,
-      corpus=data_symbols_dict,
-      n_gram=ngram,
-      ignore_symbols=None,
-    )
-
-    return rarity
+  @property
+  def combined_rarity(self) -> float:
+    return self.one_gram_rarity + self.two_gram_rarity + self.three_gram_rarity
 
 
-class MergedDatasetContainer():
-  def __init__(self, data: MergedDataset, name: Optional[str]) -> None:
-    self.data = data
-    self.name = name
-
-  @classmethod
-  def init_from_ds_dataset(cls, ds: FinalDsEntryList):
-    data = MergedDataset.init_from_ds_dataset(ds)
-    res = cls(
-      data=data,
-      name=ds.name,
-    )
-    return res
-
-  def remove_speakers(self, speakers: Set[int]) -> None:
-    res = MergedDataset()
-    for entry in self.data.items():
-      if entry.speaker_id not in speakers:
-        res.append(entry)
-    self.data = res
-    self._remove_unused_speakers()
-    self._remove_unused_symbols()
-    self._remove_unused_accents()
-
-  def _remove_unused_symbols(self) -> None:
-    all_symbol_ids: Set[int] = set()
-    for entry in self.data.items():
-      all_symbol_ids |= set(deserialize_list(entry.serialized_symbol_ids))
-    unused_symbol_ids = self.symbol_ids.get_all_symbol_ids().difference(all_symbol_ids)
-    # unused_symbols = unused_symbols.difference({PADDING_SYMBOL})
-    self.symbol_ids.remove_ids(unused_symbol_ids)
-
-  def _remove_unused_accents(self) -> None:
-    all_accent_ids: Set[int] = set()
-    for entry in self.data.items():
-      all_accent_ids |= set(deserialize_list(entry.serialized_accent_ids))
-    unused_accent_ids = self.accent_ids.get_all_ids().difference(all_accent_ids)
-    # unused_symbols = unused_symbols.difference({PADDING_SYMBOL})
-    self.accent_ids.remove_ids(unused_accent_ids)
-
-  def _remove_unused_speakers(self) -> None:
-    all_speaker_ids: Set[int] = set()
-    for entry in self.data.items():
-      all_speaker_ids |= {entry.speaker_id}
-    unused_speaker_ids = set(self.speaker_ids.get_all_speaker_ids()).difference(all_speaker_ids)
-    # unused_symbols = unused_symbols.difference({PADDING_SYMBOL})
-    self.speaker_ids.remove_ids(unused_speaker_ids)
+class PreparedDataList(GenericList[PreparedData]):
+  pass
 
 
-class MergedDatasetContainerList():
-  def __init__(self, data: List[MergedDatasetContainer]) -> None:
-    self.data = data
-
-  def merge(self) -> MergedDatasetContainer:
-    logger = getLogger(__name__)
-    logger.info("Creating common accents...")
-    accent_ids = self.make_common_accent_ids()
-    logger.info("Creating common speakers...")
-    speaker_ids = self.make_common_speaker_ids()
-    logger.info("Creating common symbols...")
-    symbol_ids = self.make_common_symbol_ids()
-
-    new_ds = MergedDataset()
-    for dataset in self.data:
-      for entry in dataset.data.items():
-        new_ds.append(entry)
-
-    # TODO: maybe sorting after speakerid and then entry_id
-    logger.info("Calculating n-gram rarity...")
-    onegram_rarity = new_ds.get_ngram_rarity(symbol_ids, 1)
-    twogram_rarity = new_ds.get_ngram_rarity(symbol_ids, 2)
-    threegram_rarity = new_ds.get_ngram_rarity(symbol_ids, 3)
-
-    for item in new_ds.items():
-      item.one_gram_rarity = onegram_rarity[item.entry_id]
-      item.two_gram_rarity = twogram_rarity[item.entry_id]
-      item.three_gram_rarity = threegram_rarity[item.entry_id]
-      item.combined_rarity = item.one_gram_rarity + item.two_gram_rarity + item.three_gram_rarity
-    logger.info("Done.")
-    # # Set new entry_id
-    # for i, entry in enumerate(new_ds.items()):
-    #   entry.entry_id = i
-
-    res = MergedDatasetContainer(
-      data=new_ds,
-      name=None,
-      accent_ids=accent_ids,
-      speaker_ids=speaker_ids,
-      symbol_ids=symbol_ids,
-    )
-
-    return res
-
-  def make_common_symbol_ids(self) -> SymbolIdDict:
-    all_symbols: Set[str] = set()
-    for ds in self.data:
-      all_symbols |= ds.symbol_ids.get_all_symbols()
-    new_symbol_ids = SymbolIdDict.init_from_symbols_with_pad(
-      all_symbols, pad_symbol=DEFAULT_PADDING_SYMBOL)
-
-    for ds in self.data:
-      for entry in ds.data.items():
-        original_symbols = ds.symbol_ids.get_symbols(entry.serialized_symbol_ids)
-        entry.serialized_symbol_ids = new_symbol_ids.get_serialized_ids(original_symbols)
-      ds.symbol_ids = new_symbol_ids
-
-    return new_symbol_ids
-
-  def make_common_accent_ids(self) -> AccentsDict:
-    all_accents: Set[str] = set()
-    for ds in self.data:
-      all_accents |= ds.accent_ids.get_all_accents()
-    new_accent_ids = AccentsDict.init_from_accents_with_pad(
-      all_accents, pad_accent=DEFAULT_PADDING_ACCENT)
-
-    for ds in self.data:
-      for entry in ds.data.items():
-        original_accents = ds.accent_ids.get_accents(entry.serialized_accent_ids)
-        entry.serialized_accent_ids = new_accent_ids.get_serialized_ids(original_accents)
-      ds.accent_ids = new_accent_ids
-
-    return new_accent_ids
-
-  @staticmethod
-  def get_new_speaker_name(ds_name: str, speaker_name: str) -> str:
-    return f"{ds_name},{speaker_name}"
-
-  def make_common_speaker_ids(self) -> SpeakersDict:
-    all_speakers: List[str] = []
-    for ds in self.data:
-      old_speaker_names = ds.speaker_ids.get_all_speakers()
-      new_speaker_names = [MergedDatasetContainerList.get_new_speaker_name(
-        ds.name, old_name) for old_name in old_speaker_names]
-      all_speakers.extend(new_speaker_names)
-
-    all_speakers_have_unique_names = len(all_speakers) == len(set(all_speakers))
-    assert all_speakers_have_unique_names
-
-    new_speaker_ids = SpeakersDict.fromlist(all_speakers)
-
-    for ds in self.data:
-      for entry in ds.data.items():
-        old_speaker_name = ds.speaker_ids.get_speaker(entry.speaker_id)
-        new_speaker_name = MergedDatasetContainerList.get_new_speaker_name(
-          ds.name, old_speaker_name)
-        entry.speaker_id = new_speaker_ids.get_id(new_speaker_name)
-      ds.speaker_ids = new_speaker_ids
-
-    return new_speaker_ids
+DsName = str
 
 
-def log_stats(data: MergedDataset, symbols: SymbolIdDict, accent_ids: AccentsDict, speakers: SpeakersDict):
-  logger.info(f"Speakers ({len(speakers)}): {', '.join(sorted(speakers.get_all_speakers()))}")
-  logger.info(f"Symbols ({len(symbols)}): {' '.join(sorted(symbols.get_all_symbols()))}")
-  logger.info(f"Accents ({len(accent_ids)}): {', '.join(sorted(accent_ids.get_all_accents()))}")
-  logger.info(f"Entries ({len(data)}): {data.get_total_duration_s()/60:.2f}m")
-  symbol_counter = get_counter([symbols.get_symbols(x.serialized_symbol_ids) for x in data.items()])
-  logger.info(symbol_counter)
-  # log texts and trainsets
-
-
-# def _get_ds_speaker_ids(datasets: List[Tuple[str, FinalDsEntryList]], ds_speakers: List[Tuple[str, Speaker]]) -> Dict[str, Set[Speaker]]:
-#   speakers_dict = {ds.name: ds.speakers.get_all_speakers() for ds in datasets.items()}
-#   expanded_ds_speakers = expand_speakers(speakers_dict, ds_speakers)
-
-#   result: Dict[str, Set[Speaker]] = {}
-#   for ds_name, speaker_name in expanded_ds_speakers:
-#     for final_ds_name, final_ds_list in datasets.items():
-#       if final_ds_name == ds_name:
-#         if ds_name not in result:
-#           result[ds_name] = set()
-#         result[ds_name] |= {speaker_name}
-#         break
-
-#   return result
-
-
-def expand_speakers(speakers_to_ds_names: Dict[str, Speakers], ds_speakers: List[Tuple[str, Speaker]]) -> List[Tuple[str, Speaker]]:
-  # expand all
-  expanded_speakers: List[Tuple[str, Speaker]] = []
+def expand_speakers(speakers_to_ds_names: Dict[DsName, Set[Speaker]], ds_speakers: List[Tuple[DsName, Speaker]]) -> Dict[DsName, Set[Speaker]]:
+  expanded_speakers: Dict[DsName, Set[Speaker]] = {
+    ds_name: {} for ds_name, _ in speakers_to_ds_names}
   for ds_name, speaker_name in ds_speakers:
     if ds_name not in speakers_to_ds_names:
       continue
     if speaker_name == ALL_SPEAKERS_INDICATOR:
-      expanded_speakers.extend([(ds_name, speaker) for speaker in speakers_to_ds_names[ds_name]])
+      expanded_speakers[ds_name] |= speakers_to_ds_names[ds_name]
     else:
       if speaker_name not in speakers_to_ds_names[ds_name]:
         continue
-      expanded_speakers.append((ds_name, speaker_name))
-  expanded_speakers = list(sorted(set(expanded_speakers)))
+      expanded_speakers[ds_name].add(speaker_name)
   return expanded_speakers
 
 
-def speakers(final_ds_list: FinalDsEntryList) -> Speakers:
+def get_speakers_of_final_data(final_ds_list: FinalDsEntryList) -> Set[Speaker]:
   result = {entry.speaker_name for entry in final_ds_list.items()}
   return result
 
 
-def merge(datasets: List[Tuple[str, FinalDsEntryList]], ds_speakers: List[Tuple[str, Speaker]]) -> MergedDatasetContainer:
-  speakers_to_ds_name = {ds_name: speakers(data) for ds_name, data in datasets}
-  selected_ds_speakers = expand_speakers(speakers_to_ds_name, ds_speakers)
-  #ds_sepaker_ids = _get_ds_speaker_ids(datasets, ds_speakers)
+def get_speakers_of_prep_data(final_ds_list: PreparedDataList) -> Set[Speaker]:
+  result = {entry.speaker_name for entry in final_ds_list.items()}
+  return result
 
-  merged_datasets: List[MergedDatasetContainer] = []
-  for ds in datasets.items():
-    if ds.name in ds_sepaker_ids.keys():
-      merged_ds_container = MergedDatasetContainer.init_from_ds_dataset(ds)
-      merged_datasets.append(merged_ds_container)
 
-  for ds in merged_datasets:
-    not_included_speakers = set(ds.speaker_ids.get_all_speaker_ids(
-      )).difference(ds_sepaker_ids[ds.name])
-    ds.remove_speakers(not_included_speakers)
+def get_ds_speaker_name(ds_name: DsName, speaker: Speaker) -> Speaker:
+  result = f"{speaker} ({ds_name})"
+  return result
 
-  merged_dataset_container_list = MergedDatasetContainerList(
-    data=merged_datasets
-  )
 
-  result = merged_dataset_container_list.merge()
+def merge(datasets: List[Tuple[DsName, FinalDsEntryList]], ds_speakers: List[Tuple[DsName, Speaker]]) -> Tuple[PreparedDataList, SymbolIdDict, SpeakersDict]:
+  final_ds = merge_final_datasets(datasets, ds_speakers)
+  prep_data_list = map_to_prepared_data(final_ds)
 
-  log_stats(
-    data=result.data,
-    symbols=result.symbol_ids,
-    accent_ids=result.accent_ids,
-    speakers=result.speaker_ids,
-    logger=logger,
-  )
+  symbol_id_dict = create_symbol_id_dict(prep_data_list)
+  set_symbol_ids(prep_data_list, symbol_id_dict)
+
+  speaker_id_dict = create_speaker_id_dict(prep_data_list)
+  set_speaker_ids(prep_data_list, speaker_id_dict)
+
+  set_rarities(prep_data_list)
+  log_stats(prep_data_list, symbol_id_dict, speaker_id_dict)
+  return prep_data_list, symbol_id_dict, speaker_id_dict
+
+
+def remove_unwanted_symbols(data: PreparedDataList, allowed_symbols: Set[Symbol]) -> Optional[Tuple[PreparedDataList, SymbolIdDict, SpeakersDict]]:
+  result = remove_unwanted_symbols_core(data, allowed_symbols)
+  removed_anything = len(result) < len(data)
+
+  if removed_anything:
+    symbol_id_dict = create_symbol_id_dict(result)
+    set_symbol_ids(result, symbol_id_dict)
+
+    speaker_id_dict = create_speaker_id_dict(result)
+    set_speaker_ids(result, speaker_id_dict)
+
+    logger = getLogger(__name__)
+    logger.info("Updating rarities...")
+    set_rarities(result)
+    log_stats(result, symbol_id_dict, speaker_id_dict)
+    return result, symbol_id_dict, speaker_id_dict
+
+  return None
+
+
+def remove_unwanted_symbols_core(data: PreparedDataList, allowed_symbols: Set[Symbol]) -> PreparedDataList:
+  logger = getLogger(__name__)
+  all_occurring_symbols = {symbol for entry in data.items() for symbol in entry.symbols}
+  keep_symbols = all_occurring_symbols & allowed_symbols
+  not_keep_symbols = all_occurring_symbols - allowed_symbols
+  logger.info(
+    f"All occurring symbols: {' '.join(sorted(all_occurring_symbols))}")
+  logger.info(
+    f"Keep utterances with these symbols: {' '.join(sorted(keep_symbols))}")
+  logger.info(
+    f"Remove utterances with these symbols: {' '.join(sorted(not_keep_symbols))}")
+
+  result = PreparedDataList()
+  for entry in data.items():
+    contains_only_allowed_symbols = len(set(entry.symbols) - keep_symbols) == 0
+    if contains_only_allowed_symbols:
+      result.append(entry)
+
+  if len(result) == len(data):
+    logger.info("Nothing to remove!")
+  elif len(result) == 0:
+    assert len(data) > 0
+    logger.info("Removed all utterances!")
+  else:
+    logger.info(
+      f"Removed {len(data) - len(result)} from {len(data)} total entries and got {len(result)} entries ({len(result)/len(data)*100:.2f}%).")
 
   return result
 
 
-def filter_symbols(data: MergedDataset, symbols: SymbolIdDict, accent_ids: AccentsDict, speakers: SpeakersDict, allowed_symbol_ids: Set[int], logger: Logger) -> MergedDatasetContainer:
-  # maybe check all symbol ids are valid before
-  allowed_symbols = [symbols.get_symbol(x) for x in allowed_symbol_ids]
-  not_allowed_symbols = [symbols.get_symbol(x)
-                         for x in symbols.get_all_symbol_ids() if x not in allowed_symbol_ids]
-  logger.info(f"Keep utterances with these symbols: {' '.join(allowed_symbols)}")
-  logger.info(f"Remove utterances with these symbols: {' '.join(not_allowed_symbols)}")
-  logger.info("Statistics before filtering:")
-  log_stats(data, symbols, accent_ids, speakers, logger)
-  result = MergedDataset([x for x in data.items() if contains_only_allowed_symbols(
-    deserialize_list(x.serialized_symbol_ids), allowed_symbol_ids)])
-  if len(result) > 0:
-    logger.info(
-        f"Removed {len(data) - len(result)} from {len(data)} total entries and got {len(result)} entries ({len(result)/len(data)*100:.2f}%).")
-  else:
-    logger.info("Removed all utterances!")
-  new_symbol_ids = update_symbols(result, symbols)
-  new_accent_ids = update_accents(result, accent_ids)
-  new_speaker_ids = update_speakers(result, speakers)
-  logger.info("Statistics after filtering:")
-  log_stats(result, new_symbol_ids, new_accent_ids, new_speaker_ids, logger)
-
-  res = MergedDatasetContainer(
-    name=None,
-    data=result,
-    accent_ids=new_accent_ids,
-    speaker_ids=new_speaker_ids,
-    symbol_ids=new_symbol_ids,
-  )
+def merge_final_datasets(datasets: List[Tuple[DsName, FinalDsEntryList]], ds_speakers: List[Tuple[DsName, Speaker]]) -> FinalDsEntryList:
+  speakers_to_ds_name = {ds_name: get_speakers_of_final_data(data) for ds_name, data in datasets}
+  selected_ds_speakers = expand_speakers(speakers_to_ds_name, ds_speakers)
+  res = FinalDsEntryList()
+  for ds_name, final_ds_data in datasets:
+    for entry in final_ds_data.items():
+      take_entry = entry.speaker_name in selected_ds_speakers[ds_name]
+      if take_entry:
+        copied_entry = deepcopy(entry)
+        copied_entry.speaker_name = get_ds_speaker_name(ds_name, entry.speaker_name)
+        res.append(copied_entry)
   return res
 
 
-def update_accents(data: MergedDataset, accent_ids: AccentsDict) -> AccentsDict:
-  new_accents: Set[str] = {x for y in data.items()
-                           for x in accent_ids.get_accents(y.serialized_accent_ids)}
-  new_accent_ids = AccentsDict.init_from_accents_with_pad(
-    new_accents, pad_accent=DEFAULT_PADDING_ACCENT)
-  if new_accent_ids.get_all_accents() != accent_ids.get_all_accents():
-    for entry in data.items():
-      original_accents = accent_ids.get_accents(entry.serialized_accent_ids)
-      entry.serialized_accent_ids = new_accent_ids.get_serialized_ids(original_accents)
-  return new_accent_ids
+def map_to_prepared_data(data: FinalDsEntryList) -> PreparedDataList:
+  result = PreparedDataList(
+     map_final_ds_entry_to_prepared_data_entry(entry) for entry in data.items()
+  )
+  return result
 
 
-def update_symbols(data: MergedDataset, symbols: SymbolIdDict) -> SymbolIdDict:
-  new_symbols: Set[str] = {x for y in data.items()
-                           for x in symbols.get_symbols(y.serialized_symbol_ids)}
-  new_symbol_ids = SymbolIdDict.init_from_symbols_with_pad(
-    new_symbols, pad_symbol=DEFAULT_PADDING_SYMBOL)
-  if new_symbol_ids.get_all_symbols() != symbols.get_all_symbols():
-    for entry in data.items():
-      original_symbols = symbols.get_symbols(entry.serialized_symbol_ids)
-      entry.serialized_symbol_ids = new_symbol_ids.get_serialized_ids(original_symbols)
-  return new_symbol_ids
+def map_final_ds_entry_to_prepared_data_entry(entry: FinalDsEntry) -> PreparedData:
+  prep_entry = PreparedData(
+    entry_id=entry.entry_id,
+    identifier=entry.identifier,
+    mel_absolute_path=entry.mel_absolute_path,
+    mel_n_channels=entry.mel_n_channels,
+    speaker_gender=entry.speaker_gender,
+    speaker_name=entry.speaker_name,
+    symbols=entry.symbols,
+    symbols_format=entry.symbols_format,
+    symbols_language=entry.symbols_language,
+    symbols_original=entry.symbols_original,
+    symbols_original_format=entry.symbols_original_format,
+    wav_absolute_path=entry.wav_absolute_path,
+    wav_duration=entry.wav_duration,
+    wav_original_absolute_path=entry.wav_original_absolute_path,
+    wav_sampling_rate=entry.wav_sampling_rate,
+    symbol_ids=None,
+    speaker_id=None,
+    three_gram_rarity=None,
+    two_gram_rarity=None,
+    one_gram_rarity=None,
+  )
+  return prep_entry
 
 
-def update_speakers(data: MergedDataset, speakers: SpeakersDict) -> SpeakersDict:
-  new_speakers: Set[str] = {speakers.get_speaker(y.speaker_id) for y in data.items()}
-  new_speaker_ids = SpeakersDict.fromlist(new_speakers)
-  if new_speaker_ids.get_all_speakers() != speakers.get_all_speakers():
-    for entry in data.items():
-      old_speaker_name = speakers.get_speaker(entry.speaker_id)
-      entry.speaker_id = new_speaker_ids.get_id(old_speaker_name)
-  return new_speaker_ids
+def create_speaker_id_dict(data: PreparedDataList) -> SpeakersDict:
+  all_speakers = get_speakers_of_prep_data(data)
+  result = SpeakersDict.fromlist(list(sorted(all_speakers)))
+  return result
 
 
-# def extract_random_subset(data: MergedDataset, symbols: SymbolIdDict, accent_ids: AccentsDict, speakers: SpeakersDict, shards: int):
-#   text_data = {x.entry_id: symbols.get_symbols(x.serialized_symbol_ids) for x in data.items()}
-#   res = main_rand(
-#     text_data=text_data,
-#     shards=shards,
-#   )
-#   result = MergedDataset([x for x in data.items() if x.entry_id in res.keys()])
-#   # new_symbols: Set[str] = set([x for y in res.values() for x in y])
-#   new_symbol_ids = update_symbols(result, symbols)
-#   new_accent_ids = update_accents(result, accent_ids)
-#   new_speaker_ids = update_speakers(result, speakers)
+def set_speaker_ids(data: PreparedDataList, speaker_id_dict: SpeakersDict) -> None:
+  for entry in data.items():
+    entry.speaker_id = speaker_id_dict.get_id(entry.speaker_name)
 
-#   return result, new_symbol_ids, new_accent_ids, new_speaker_ids
+
+def create_symbol_id_dict(data: PreparedDataList) -> SymbolIdDict:
+  all_symbols = {symbol for entry in data.items() for symbol in entry.symbols}
+  result = SymbolIdDict.init_from_symbols_with_pad(all_symbols, pad_symbol=DEFAULT_PADDING_SYMBOL)
+  return result
+
+
+def set_symbol_ids(data: PreparedDataList, symbol_id_dict: SymbolIdDict) -> None:
+  for entry in data.items():
+    entry.symbol_ids = symbol_id_dict.get_ids(entry.symbols)
+
+
+def set_rarities(data: PreparedDataList) -> None:
+  logger = getLogger(__name__)
+  logger.info("Calculating rarities...")
+  corpus = OrderedDict(
+      {entry.entry_id: entry.symbols for entry in data.items()})
+
+  get_rarity_method = partial(
+    get_rarity_ngrams,
+    data=corpus,
+    corpus=corpus,
+    ignore_symbols=None,
+  )
+
+  logger.info("1-grams...")
+  one_gram_rarity = get_rarity_method(n_gram=1)
+
+  logger.info("2-grams...")
+  two_gram_rarity = get_rarity_method(n_gram=2)
+
+  logger.info("3-grams...")
+  three_gram_rarity = get_rarity_method(n_gram=3)
+
+  for entry in data.items():
+    entry.one_gram_rarity = one_gram_rarity[entry.entry_id]
+    entry.two_gram_rarity = two_gram_rarity[entry.entry_id]
+    entry.three_gram_rarity = three_gram_rarity[entry.entry_id]
+
+  logger.info("Done.")
+
+
+def get_total_duration_s(data: PreparedDataList):
+  durations = [x.duration_s for x in data.items()]
+  total_duration = sum(durations)
+  return total_duration
+
+
+def log_stats(data: PreparedDataList, symbols: SymbolIdDict, speakers: SpeakersDict):
+  logger = getLogger(__name__)
+  logger.info(f"Entries ({len(data)}): {get_total_duration_s(data)/60:.2f}m")
+  logger.info(f"Speakers ({len(speakers)}): {', '.join(sorted(speakers.get_all_speakers()))}")
+  logger.info(f"Symbols ({len(symbols)}): {' '.join(sorted(symbols.get_all_symbols()))}")
+  logger.info(f"Symbol occurrences:")
+  symbol_counter = Counter([symbol for entry in data.items() for symbol in entry.symbols])
+  logger.info(symbol_counter)
+  # log texts and trainsets
