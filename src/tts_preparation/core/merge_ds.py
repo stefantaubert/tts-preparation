@@ -211,15 +211,9 @@ def set_rarities(data: PreparedDataList) -> None:
   logger.info("Done.")
 
 
-def get_total_duration_s(data: PreparedDataList):
-  durations = [x.duration_s for x in data.items()]
-  total_duration = sum(durations)
-  return total_duration
-
-
 def log_stats(data: PreparedDataList, symbols: SymbolIdDict, speakers: SpeakersDict):
   logger = getLogger(__name__)
-  logger.info(f"Entries ({len(data)}): {get_total_duration_s(data)/60:.2f}m")
+  logger.info(f"Entries ({len(data)}): {data.total_duration_s/60:.2f}m")
   logger.info(f"Speakers ({len(speakers)}): {', '.join(sorted(speakers.get_all_speakers()))}")
   logger.info(f"Symbols ({len(symbols)}): {' '.join(sorted(symbols.get_all_symbols()))}")
   logger.info(f"Symbol occurrences:")

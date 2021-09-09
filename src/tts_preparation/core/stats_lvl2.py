@@ -1,4 +1,4 @@
-from logging import Logger
+from logging import getLogger
 from math import ceil
 
 import numpy as np
@@ -6,19 +6,22 @@ import pandas as pd
 from tts_preparation.core.data import DatasetType
 
 
-def get_one_gram_stats(stats: pd.DataFrame, ds: DatasetType, logger: Logger):
+def get_one_gram_stats(stats: pd.DataFrame, ds: DatasetType):
+  logger = getLogger(__name__)
   logger.info(f"Stats {str(ds)} onegrams")
-  get_stats(stats, ds, logger)
+  get_stats(stats, ds)
 
 
-def get_two_gram_stats(stats: pd.DataFrame, ds: DatasetType, logger: Logger):
+def get_two_gram_stats(stats: pd.DataFrame, ds: DatasetType):
+  logger = getLogger(__name__)
   logger.info(f"Stats {str(ds)} twograms")
-  get_stats(stats, ds, logger)
+  get_stats(stats, ds)
 
 
-def get_three_gram_stats(stats: pd.DataFrame, ds: DatasetType, logger: Logger):
+def get_three_gram_stats(stats: pd.DataFrame, ds: DatasetType):
+  logger = getLogger(__name__)
   logger.info(f"Stats {str(ds)} threegrams")
-  get_stats(stats, ds, logger)
+  get_stats(stats, ds)
 
 
 def column_title(ds: DatasetType) -> str:
@@ -30,7 +33,8 @@ def column_title(ds: DatasetType) -> str:
     return "VAL"
 
 
-def get_stats(stats: pd.DataFrame, ds: DatasetType, logger: Logger):
+def get_stats(stats: pd.DataFrame, ds: DatasetType):
+  logger = getLogger(__name__)
   title = column_title(ds)
   top_n_range = range(10, 110, 10)
   stats.sort_values(by=['TOTAL_OCCURRENCES_COUNT'], inplace=True, ascending=False)

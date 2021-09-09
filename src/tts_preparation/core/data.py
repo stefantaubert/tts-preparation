@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Set
 
 from text_utils.gender import Gender
 from text_utils.language import Language
@@ -9,10 +9,12 @@ from text_utils.symbol_format import SymbolFormat
 from text_utils.types import Speaker, SpeakerId, SymbolIds, Symbols
 from tts_preparation.utils import GenericList
 
+EntryId: int
+
 
 @dataclass()
 class PreparedData:
-  entry_id: int
+  entry_id: EntryId
   identifier: str
   speaker_id: SpeakerId
   speaker_name: Speaker
@@ -52,6 +54,17 @@ class PreparedDataList(GenericList[PreparedData]):
 
   def sort_after_entry_id(self):
     self.sort(key=PreparedDataList._get_key_for_entry_id_sorting, reverse=False)
+
+  @property
+  def unique_entry_ids(self) -> Set[int]:
+    res = {x.entry_id for x in self.items()}
+    return res
+
+  @property
+  def total_duration_s(self) -> float:
+    durations = [entry.wav_duration for entry in self.items()]
+    total_duration = sum(durations)
+    return total_duration
 
 
 def get_speaker_wise(data: PreparedDataList) -> Dict[Speaker, PreparedDataList]:

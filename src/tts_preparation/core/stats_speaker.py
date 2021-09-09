@@ -20,15 +20,15 @@ def log_general_stats(trainset: PreparedDataList, valset: PreparedDataList, test
   total_set = get_total_set(trainset, valset, testset, restset)
   len_except_rest = len(trainset) + len(testset) + len(valset)
   logger.info(
-    f"Size training set: {len(trainset)} ({trainset.get_total_duration_s()/60:.2f}m) --> {get_percent_str(len(trainset), len(total_set))} ({get_percent_str(len(trainset), len_except_rest)})")
+    f"Size training set: {len(trainset)} ({trainset.total_duration_s/60:.2f}m) --> {get_percent_str(len(trainset), len(total_set))} ({get_percent_str(len(trainset), len_except_rest)})")
   logger.info(
-    f"Size validation set: {len(valset)} ({valset.get_total_duration_s()/60:.2f}m) --> {get_percent_str(len(valset), len(total_set))} ({get_percent_str(len(valset), len_except_rest)})")
+    f"Size validation set: {len(valset)} ({valset.total_duration_s/60:.2f}m) --> {get_percent_str(len(valset), len(total_set))} ({get_percent_str(len(valset), len_except_rest)})")
   logger.info(
-    f"Size test set: {len(testset)} ({testset.get_total_duration_s()/60:.2f}m) --> {get_percent_str(len(testset), len(total_set))} ({get_percent_str(len(testset), len_except_rest)})")
+    f"Size test set: {len(testset)} ({testset.total_duration_s/60:.2f}m) --> {get_percent_str(len(testset), len(total_set))} ({get_percent_str(len(testset), len_except_rest)})")
   logger.info(
-    f"Size rest set: {len(restset)} ({restset.get_total_duration_s()/60:.2f}m) --> {get_percent_str(len(restset), len(total_set))}")
-  logger.info(f"Total: {len(total_set)} ({total_set.get_total_duration_s()/60:.2f}m)")
-  logger.info(f"Original set: {len(merge_data)} ({merge_data.get_total_duration_s()/60:.2f}m)")
+    f"Size rest set: {len(restset)} ({restset.total_duration_s/60:.2f}m) --> {get_percent_str(len(restset), len(total_set))}")
+  logger.info(f"Total: {len(total_set)} ({total_set.total_duration_s/60:.2f}m)")
+  logger.info(f"Original set: {len(merge_data)} ({merge_data.total_duration_s/60:.2f}m)")
   logger.info(f"Something lost: {'no' if len(total_set) == len(merge_data) else 'yes!'}")
 
 

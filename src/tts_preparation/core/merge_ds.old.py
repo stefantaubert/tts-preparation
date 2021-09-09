@@ -226,7 +226,7 @@
 #   logger.info(f"Speakers ({len(speakers)}): {', '.join(sorted(speakers.get_all_speakers()))}")
 #   logger.info(f"Symbols ({len(symbols)}): {' '.join(sorted(symbols.get_all_symbols()))}")
 #   logger.info(f"Accents ({len(accent_ids)}): {', '.join(sorted(accent_ids.get_all_accents()))}")
-#   logger.info(f"Entries ({len(data)}): {data.get_total_duration_s()/60:.2f}m")
+#   logger.info(f"Entries ({len(data)}): {data.total_duration_s/60:.2f}m")
 #   symbol_counter = get_counter([symbols.get_symbols(x.serialized_symbol_ids) for x in data.items()])
 #   logger.info(symbol_counter)
 #   # log texts and trainsets
