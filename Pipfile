@@ -23,6 +23,7 @@ text-utils = {editable = true, ref = "master", git = "https://github.com/stefant
 speech-dataset-preprocessing = {editable = true, ref = "master", git = "https://github.com/stefantaubert/speech-dataset-preprocessing.git"}
 accent-analyser = {editable = true, ref = "master", git = "https://github.com/stefantaubert/accent-analyser.git"}
 text-selection = {editable = true, ref = "master", git = "https://github.com/stefantaubert/text-selection.git"}
+sentence2pronunciation = {editable = true, ref = "main", git = "https://github.com/jasminsternkopf/sentence2pronunciation.git"}
 
 [requires]
 python_version = "3.8"

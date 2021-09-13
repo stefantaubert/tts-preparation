@@ -1,12 +1,19 @@
+import random
+import string
 from dataclasses import dataclass
+from functools import partial
 from logging import getLogger
-from typing import List
+from typing import Optional
 
-from text_utils import SymbolFormat
-from text_utils.language import Language
-from text_utils.symbol_id_dict import SymbolIdDict
-from text_utils.text import text_to_sentences, text_to_symbols
-from text_utils.types import Symbol, SymbolIds, Symbols
+from accent_analyser.core.word_probabilities import (ProbabilitiesDict,
+                                                     replace_with_prob)
+from text_utils import (EngToIPAMode, Language, Symbol, SymbolFormat,
+                        SymbolIdDict, SymbolIds, Symbols, remove_arcs,
+                        remove_stress, remove_tones, symbols_to_ipa,
+                        text_normalize, text_to_sentences, text_to_symbols)
+from text_utils.symbols_map import SymbolsMap
+from tts_preparation.core.dummy_sentence2pronunciation import \
+    sentence2pronunciaton
 from tts_preparation.utils import GenericList
 
 UNINFERABLE_SYMBOL_MARKER = "█"
@@ -15,116 +22,169 @@ UNINFERABLE_SYMBOL_MARKER = "█"
 @dataclass
 class InferableUtterance:
   utterance_id: int
-  symbols: Symbols
-  symbols_format: SymbolFormat
-  symbols_uninferable_marked: Symbols
-  inferable_symbols: Symbols
-  inferable_symbol_ids: SymbolIds
+  language: Language
   original_symbols: Symbols
   original_symbols_format: SymbolFormat
-  language: Language
+  symbols: Symbols
+  symbols_format: SymbolFormat
+  symbol_ids: SymbolIds
+
+  def get_symbols_uninferable_marked(self, marker: Symbol) -> Symbols:
+    result = tuple(symbol if symbol_id is not None else marker for symbol,
+                   symbol_id in zip(self.symbols, self.symbol_ids))
+    return result
 
   @property
   def can_all_symbols_be_inferred(self) -> bool:
-    return len(self.inferable_symbols) == len(self.symbols)
+    return None not in self.symbol_ids
 
 
 class InferableUtterances(GenericList[InferableUtterance]):
   pass
 
 
-def log_utterance(utterance: InferableUtterance) -> None:
+def log_utterance(utterance: InferableUtterance, marker: Symbol) -> None:
   logger = getLogger(__name__)
   utterance_id_str = f"{utterance.utterance_id}: "
   logger.info(f"{utterance_id_str}{''.join(utterance.original_symbols)}")
   logger.info(
-    f"{len(utterance_id_str)*' '}{''.join(utterance.symbols_uninferable_marked)} ({len(utterance.inferable_symbols)})")
+    f"{len(utterance_id_str)*' '}{''.join(utterance.get_symbols_uninferable_marked(marker))} ({len(utterance.symbols)})")
 
 
-def __text_to_utterances(text: str, language: Language, text_format: SymbolFormat) -> List[str]:
-  # each line is at least regarded as one sentence.
-  lines = text.split("\n")
-  all_utterances: List[str] = []
-  for line in lines:
-    utterance = text_to_sentences(
-      text=line.strip(),
-      lang=language,
-      text_format=text_format,
-    )
-    all_utterances.extend(utterance)
-  return all_utterances
-
-
-def __remove_non_existent_symbols(symbols: Symbols, symbol_id_dict: SymbolIdDict) -> Symbols:
-  result = tuple(symbol for symbol in symbols if symbol_id_dict.symbol_exists(symbol))
-  return result
-
-
-def replace_non_existent_symbols(symbols: Symbols, symbol_id_dict: SymbolIdDict, replace_with_symbol: Symbol) -> Symbols:
-  result = tuple(symbol if symbol_id_dict.symbol_exists(symbol)
-                 else replace_with_symbol for symbol in symbols)
-  return result
-
-
-def __text_utterances_to_inferable_utterances(text_utterances: List[str], language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict):
-  utterances = InferableUtterances()
-  for utterance_id, text_utterance in enumerate(text_utterances, start=1):
-    utterance = __text_utterance_to_inferable_utterance(
-      text_utterance=text_utterance,
-      language=language,
-      symbol_id_dict=symbol_id_dict,
-      text_format=text_format,
-      utterance_id=utterance_id,
-    )
-    utterances.append(utterance)
-  return utterances
-
-
-def __text_utterance_to_inferable_utterance(text_utterance: str, language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict, utterance_id: int):
-  symbols = text_to_symbols(text_utterance, text_format, language)
-  inferable_symbols = __remove_non_existent_symbols(symbols, symbol_id_dict)
-  utterance = InferableUtterance(
-    utterance_id=utterance_id,
-    symbols=symbols,
-    symbols_format=text_format,
-    inferable_symbols=inferable_symbols,
-    inferable_symbol_ids=symbol_id_dict.get_ids(inferable_symbols),
-    symbols_uninferable_marked=replace_non_existent_symbols(
-      symbols, symbol_id_dict, UNINFERABLE_SYMBOL_MARKER),
-    language=language,
-    original_symbols=symbols,
-    original_symbols_format=text_format,
-  )
-  return utterance
+def get_symbol_ids(symbols: Symbols, symbol_id_dict: SymbolIdDict) -> SymbolIds:
+  symbol_ids = tuple(symbol_id_dict.get_id(symbol) if symbol_id_dict.symbol_exists(
+    symbol) else None for symbol in symbols)
+  return symbol_ids
 
 
 def add_text(text: str, language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict) -> InferableUtterances:
-  text_utterances = __text_to_utterances(text, language, text_format)
-  inferable_utterances = __text_utterances_to_inferable_utterances(
-    text_utterances, language, text_format, symbol_id_dict)
-  return inferable_utterances
+  new_utterances = InferableUtterances()
+  # each non-empty line is regarded as one utterance.
+  lines = text.split("\n")
+  non_empty_lines = [line for line in lines if line != ""]
+  for line_nr, line in enumerate(non_empty_lines, start=1):
+    symbols = text_to_symbols(line, text_format, language)
+    utterance = InferableUtterance(
+      utterance_id=line_nr,
+      language=language,
+      original_symbols=symbols,
+      original_symbols_format=text_format,
+      symbols=symbols,
+      symbols_format=text_format,
+      symbol_ids=get_symbol_ids(symbols, symbol_id_dict),
+    )
+    new_utterances.append(utterance)
+  return new_utterances
+
+
+def utterances_split(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict) -> InferableUtterances:
+  new_utterances = InferableUtterances()
+  counter = 1
+  for utterance in utterances.items():
+    text_sentences = text_to_sentences(
+      text=''.join(utterance.symbols),
+      text_format=utterance.symbols_format,
+      lang=utterance.language,
+    )
+
+    for text_sentence in text_sentences:
+      symbols = text_to_symbols(text_sentence, utterance.symbols_format, utterance.language)
+      utterance = InferableUtterance(
+        utterance_id=counter,
+        language=utterance.language,
+        original_symbols=symbols,
+        original_symbols_format=utterance.symbols_format,
+        symbols=symbols,
+        symbols_format=utterance.symbols_format,
+        symbol_ids=get_symbol_ids(symbols, symbol_id_dict),
+      )
+      new_utterances.append(utterance)
+      counter += 1
+  return new_utterances
 
 
 def utterances_normalize(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict) -> None:
-  # TODO
-  pass
+  for utterance in utterances.items():
+    new_text = text_normalize(
+      text=''.join(utterance.symbols),
+      lang=utterance.language,
+      text_format=utterance.symbols_format,
+    )
+
+    new_symbols = text_to_symbols(
+      text=new_text,
+      lang=utterance.language,
+      text_format=utterance.symbols_format,
+    )
+
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
 
 
-def utterances_apply_mapping_table(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict) -> None:
-  # TODO
-  pass
+def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, mode: Optional[EngToIPAMode], consider_ipa_annotations: Optional[bool]) -> None:
+  for utterance in utterances.items():
+    new_symbols, new_format = symbols_to_ipa(
+      symbols=utterance.symbols,
+      lang=utterance.language,
+      symbols_format=utterance.symbols_format,
+      mode=mode,
+      consider_ipa_annotations=consider_ipa_annotations,
+    )
+
+    utterance.symbols = new_symbols
+    utterance.symbols_format = new_format
+    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
 
 
-def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict) -> None:
-  # TODO
-  pass
+def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool) -> None:
+  for utterance in utterances.items():
+    new_symbols = utterance.symbols
+
+    if ignore_arcs:
+      new_symbols = remove_arcs(new_symbols)
+
+    if ignore_tones:
+      new_symbols = remove_tones(new_symbols)
+
+    if ignore_stress:
+      new_symbols = remove_stress(new_symbols)
+
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
 
 
-def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict) -> None:
-  # TODO
-  pass
+def utterances_apply_symbols_map(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, symbols_map: SymbolsMap) -> None:
+  for utterance in utterances.items():
+    new_symbols = symbols_map.apply_to_symbols(utterance.symbols)
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
 
 
-def utterances_apply_symbols_map(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict) -> None:
-  # TODO
-  pass
+def get_pronunciation_from_mapping_table(word: Symbols, mapping_table: ProbabilitiesDict) -> Symbols:
+  if word not in mapping_table:
+    return word
+
+  word_replaced = replace_with_prob(word, mapping_table)
+  replaced_something = word != word_replaced
+  if replaced_something:
+    logger = getLogger(__name__)
+    logger.info(
+      f"Mapped \"{''.join(word)}\" to \"{''.join(word_replaced)}\".")
+  return word_replaced
+
+
+def utterances_apply_mapping_table(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, mapping_table: ProbabilitiesDict, seed: int) -> None:
+  random.seed(seed)
+  get_pronun_method = partial(get_pronunciation_from_mapping_table, mapping_table=mapping_table)
+  for utterance in utterances.items():
+    new_symbols = sentence2pronunciaton(
+      sentence=utterance.symbols,
+      trim_symbols=set(string.punctuation),
+      get_pronunciation=get_pronun_method,
+      split_on_hyphen=True,
+      consider_annotation=False,
+      annotation_split_symbol=None,
+    )
+
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
