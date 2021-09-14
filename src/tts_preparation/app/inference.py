@@ -7,16 +7,15 @@ from text_utils import EngToIPAMode, Language, Symbol, SymbolFormat, SymbolsMap
 from tts_preparation.app.io import (get_infer_map_path, get_merged_dir,
                                     infer_map_exists)
 from tts_preparation.app.merge_ds import load_merged_symbol_converter
-from tts_preparation.core.inference2 import (InferableUtterances,
-                                             add_utterances_from_text,
-                                             get_utterances_txt,
-                                             log_utterances,
-                                             utterances_apply_mapping_table,
-                                             utterances_apply_symbols_map,
-                                             utterances_change_ipa,
-                                             utterances_convert_to_ipa,
-                                             utterances_normalize,
-                                             utterances_split)
+from tts_preparation.core.inference import (InferableUtterances,
+                                            add_utterances_from_text,
+                                            get_utterances_txt, log_utterances,
+                                            utterances_apply_mapping_table,
+                                            utterances_apply_symbols_map,
+                                            utterances_change_ipa,
+                                            utterances_convert_to_ipa,
+                                            utterances_normalize,
+                                            utterances_split)
 from tts_preparation.globals import NOT_INFERABLE_SYMBOL_MARKER
 from tts_preparation.utils import (get_subdir, get_subfolder_names, load_obj,
                                    read_text, save_obj)

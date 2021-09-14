@@ -1,446 +1,192 @@
 import random
+import string
 from dataclasses import dataclass
-from logging import Logger, getLogger
-from math import ceil
-from typing import Dict, List, Optional, Set, Tuple
+from functools import partial
+from logging import getLogger
+from typing import Optional
 
-from accent_analyser import replace_with_prob
-from text_utils import (AccentsDict, EngToIpaMode, IPAExtractionSettings,
-                        Language, SymbolIdDict, SymbolsMap, deserialize_list,
-                        sentence_to_words, serialize_list, strip_word,
-                        symbols_normalize, symbols_replace, symbols_to_ipa,
-                        symbols_to_lower, text_to_sentences, text_to_symbols,
-                        words_to_sentence)
-from tts_preparation.globals import DEFAULT_PADDING_SYMBOL
-from tts_preparation.utils import (GenericList, console_out_len,
-                                   get_unique_items)
-
-STRIP_SYMBOLS = list(".?!,;-:")
-
-
-def get_formatted_core(sent_id: int, symbols: List[str], accent_ids: List[int], max_pairs_per_line: int, space_length: int, accent_id_dict: AccentsDict) -> str:
-  assert len(symbols) == len(accent_ids)
-  final_symbols: List[str] = []
-  final_accent_ids: List[str] = []
-  for symbol, accent_id in zip(symbols, accent_ids):
-    max_width = max(console_out_len(symbol), len(str(accent_id)))
-    symbol_str = symbol + " " * (max_width - console_out_len(symbol))
-    accent_id_str = str(accent_id) + " " * (max_width - len(str(accent_id)))
-    final_symbols.append(symbol_str)
-    final_accent_ids.append(accent_id_str)
-  count_lines = ceil(len(final_symbols) / max_pairs_per_line)
-  batches = []
-  for i in range(count_lines):
-    start_idx = i * max_pairs_per_line
-    end = min((i + 1) * max_pairs_per_line, len(final_symbols))
-    batches.append((final_symbols[start_idx:end], final_accent_ids[start_idx:end]))
-  final_pair_lines = []
-  for batch_symbs, batch_acc_ids in batches:
-    symbols_line = (" " * space_length).join(batch_symbs)
-    accents_line = (" " * space_length).join(batch_acc_ids)
-    final_pair_lines.append(symbols_line)
-    final_pair_lines.append(accents_line)
-    accent_ids_list = []
-    for occuring_accent_id in sorted({int(x) for x in batch_acc_ids}):
-      accent_ids_list.append(
-        f"{occuring_accent_id}={accent_id_dict.get_accent(occuring_accent_id)}")
-    accends_names_lines = ', '.join(accent_ids_list)
-    final_pair_lines.append(accends_names_lines)
-    # final_pair_lines.append("")
-  # add symbols count
-  final_pair_lines[-3] += f" ({len(final_symbols)})"
-  # final_pair_lines[-4] += f" ({len(final_symbols)})"
-  sent_mark = f"{sent_id}: "
-  final_pair_lines[0] = f"{sent_mark}{final_pair_lines[0]}"
-  for i in range(len(final_pair_lines) - 1):
-    final_pair_lines[i + 1] = " " * len(sent_mark) + final_pair_lines[i + 1]
-
-  result = "\n".join(final_pair_lines)
-  return result
-
-
-def get_formatted_core_v2(sent_id: int, symbols: List[str], original_text: str) -> str:
-  return f"{sent_id }: {''.join(symbols)}\n{' ' * (len(str(sent_id)))} ({original_text})"
-
-# def get_right_nearest_index_of_symbol(text: str, position: int, symbol: str) -> int:
-#   """returns -1 if symbol not in <= position in text, otherwise the first index"""
-#   assert position < len(text)
-#   assert len(symbol) == 1
-#   while position >= 0:
-#     if text[position] != symbol:
-#       position -= 1
-#   return position
-
-
-@dataclass()
-class Sentence:
-  sent_id: int
-  orig_lang: Language
-  original_text: str
-  text: str
-  lang: Language
-  serialized_symbols: str
-  serialized_accents: str
-
-  def get_symbol_ids(self):
-    return deserialize_list(self.serialized_symbols)
-
-  def get_accent_ids(self):
-    return deserialize_list(self.serialized_accents)
-
-  def get_formatted(self, symbol_id_dict: SymbolIdDict, accent_id_dict: AccentsDict, pairs_per_line=170, space_length=0):
-    return get_formatted_core(
-      sent_id=self.sent_id,
-      symbols=symbol_id_dict.get_symbols(self.serialized_symbols),
-      accent_ids=self.get_accent_ids(),
-      accent_id_dict=accent_id_dict,
-      space_length=space_length,
-      max_pairs_per_line=pairs_per_line
-    )
-
-  def get_formatted_v2(self, symbol_id_dict: SymbolIdDict):
-    return get_formatted_core_v2(
-      sent_id=self.sent_id,
-      symbols=symbol_id_dict.get_symbols(self.serialized_symbols),
-      original_text=self.original_text,
-    )
-
-
-class SentenceList(GenericList[Sentence]):
-  # def get_occuring_symbols(self) -> Set[str]:
-  #   ipa_settings = IPAExtractionSettings(
-  #     ignore_tones=False,
-  #     ignore_arcs=False,
-  #     replace_unknown_ipa_by=PADDING_SYMBOL,
-  #   )
-
-  #   return get_unique_items([text_to_symbols(
-  #     text=x.text,
-  #     lang=x.lang,
-  #     ipa_settings=ipa_settings,
-  #     ) for x in self.items()])
-
-  def get_formatted(self, symbol_id_dict: SymbolIdDict, accent_id_dict: AccentsDict):
-    # result = "\n".join([sentence.get_formatted(symbol_id_dict, accent_id_dict) for sentence in self.items()])
-    result = "\n".join([sentence.get_formatted_v2(symbol_id_dict) for sentence in self.items()])
-    return result
-
-
-@dataclass()
-class AccentedSymbol:
-  position: str
-  symbol: str
-  accent: str
-
-
-class AccentedSymbolList(GenericList[AccentedSymbol]):
-  pass
+from accent_analyser.core.word_probabilities import (ProbabilitiesDict,
+                                                     replace_with_prob)
+from text_utils import (EngToIPAMode, Language, Symbol, SymbolFormat,
+                        SymbolIdDict, SymbolIds, Symbols, remove_arcs,
+                        remove_stress, remove_tones, symbols_to_ipa,
+                        text_normalize, text_to_sentences, text_to_symbols)
+from text_utils.symbols_map import SymbolsMap
+from tts_preparation.core.dummy_sentence2pronunciation import \
+    sentence2pronunciaton
+from tts_preparation.utils import GenericList
 
 
 @dataclass
-class InferSentence:
-  sent_id: int
-  symbols: List[str]
-  accents: List[str]
-  original_text: str
+class InferableUtterance:
+  utterance_id: int
+  language: Language
+  symbols: Symbols
+  symbols_format: SymbolFormat
+  symbol_ids: SymbolIds
 
-  def get_formatted_old(self, accent_id_dict: AccentsDict, pairs_per_line=170, space_length=0):
-    return get_formatted_core(
-      sent_id=self.sent_id,
-      symbols=self.symbols,
-      accent_ids=accent_id_dict.get_ids(self.accents),
-      accent_id_dict=accent_id_dict,
-      space_length=space_length,
-      max_pairs_per_line=pairs_per_line
-    )
+  def get_symbols_uninferable_marked(self, marker: Symbol) -> Symbols:
+    result = tuple(symbol if symbol_id is not None else marker for symbol,
+                   symbol_id in zip(self.symbols, self.symbol_ids))
+    return result
 
-  def get_formatted(self, accent_id_dict: AccentsDict, pairs_per_line=170, space_length=0):
-    return get_formatted_core_v2(
-      sent_id=self.sent_id,
-      symbols=self.symbols,
-      original_text=self.original_text,
-    )
+  @property
+  def can_all_symbols_be_inferred(self) -> bool:
+    return None not in self.symbol_ids
 
 
-class InferSentenceList(GenericList[InferSentence]):
-  @classmethod
-  def from_sentences(cls, sentences: SentenceList, accents: AccentsDict, symbols: SymbolIdDict):
-    res = cls()
-    for sentence in sentences.items():
-      infer_sent = InferSentence(
-        sent_id=sentence.sent_id,
-        symbols=symbols.get_symbols(sentence.serialized_symbols),
-        accents=accents.get_accents(sentence.serialized_accents),
-        original_text=sentence.original_text,
-      )
-      assert len(infer_sent.symbols) == len(infer_sent.accents)
-      res.append(infer_sent)
-    return res
-
-  def replace_unknown_symbols(self, model_symbols: SymbolIdDict, logger: Logger) -> bool:
-    unknown_symbols_exist = False
-    for sentence in self.items():
-      if model_symbols.has_unknown_symbols(sentence.symbols):
-        sentence.symbols = model_symbols.replace_unknown_symbols_with_pad(
-          sentence.symbols, pad_symbol=DEFAULT_PADDING_SYMBOL)
-        text_to_print = SymbolIdDict.symbols_to_text(sentence.symbols)
-        text_to_print = text_to_print.replace(DEFAULT_PADDING_SYMBOL, "█")
-        unknown_count = text_to_print.count("█")
-        logger.info(
-          f"Sentence {sentence.sent_id} contains {unknown_count} unknown symbol(s) (█): {text_to_print}")
-        unknown_symbols_exist = True
-        assert len(sentence.symbols) == len(sentence.accents)
-    return unknown_symbols_exist
-
-  def get_subset(self, sent_ids: Optional[Set[int]], seed: Optional[int] = 1234) -> List[InferSentence]:
-    if sent_ids is not None:
-      entries = [x for x in self.items() if x.sent_id in sent_ids]
-      return entries
-
-    return [self.get_random_entry(seed)]
-
-  def to_sentence(self, space_symbol: str, space_accent: str) -> InferSentence:
-    res = InferSentence(
-      sent_id=1,
-      symbols=[],
-      accents=[],
-      original_text="",
-    )
-
-    for sent in self.items():
-      res.symbols.extend(sent.symbols + [space_symbol])
-      res.accents.extend(sent.accents + [space_accent])
-
-    res.original_text = " ".join(x.original_text for x in self.items())
-    return res
+class InferableUtterances(GenericList[InferableUtterance]):
+  pass
 
 
-def add_text(text: str, lang: Language, ipa_settings: IPAExtractionSettings, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
-  res = SentenceList()
-  # each line is at least regarded as one sentence.
-  lines = text.split("\n")
-
-  all_sents = []
-  for line in lines:
-    sents = text_to_sentences(
-      text=line,
-      lang=lang,
-      logger=logger,
-    )
-    all_sents.extend(sents)
-
-  default_accent_id = 0
-  sents_symbols: List[List[str]] = [text_to_symbols(
-    sent,
-    lang=lang,
-    ipa_settings=ipa_settings,
-    logger=logger,
-  ) for sent in all_sents]
-  symbols = SymbolIdDict.init_from_symbols(get_unique_items(sents_symbols))
-  for i, sent_symbols in enumerate(sents_symbols):
-    sentence = Sentence(
-      sent_id=i + 1,
-      lang=lang,
-      serialized_symbols=symbols.get_serialized_ids(sent_symbols),
-      serialized_accents=serialize_list([default_accent_id] * len(sent_symbols)),
-      text=SymbolIdDict.symbols_to_text(sent_symbols),
-      original_text=SymbolIdDict.symbols_to_text(sent_symbols),
-      orig_lang=lang,
-    )
-    res.append(sentence)
-  return symbols, res
+def get_utterances_txt(utterances: InferableUtterances, marker: Symbol) -> str:
+  lines = []
+  for utterance in utterances.items():
+    line = f"{utterance.utterance_id}.: {''.join(utterance.get_symbols_uninferable_marked(marker))}"
+  return '\n'.join(lines)
 
 
-# def set_accent(sentences: SentenceList, accent_ids: AccentsDict, accent: str) -> Tuple[SymbolIdDict, SentenceList]:
-#   accent_id = accent_ids.get_id(accent)
-#   for sentence in sentences.items():
-#     new_accent_ids = [accent_id] * len(sentence.get_accent_ids())
-#     sentence.serialized_accents = serialize_list(new_accent_ids)
-#     assert len(sentence.get_accent_ids()) == len(sentence.get_symbol_ids())
-#   return sentences
-
-
-def sents_normalize(sentences: SentenceList, text_symbols: SymbolIdDict, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
-  # Maybe add info if something was unknown
-  sents_new_symbols = []
-  for sentence in sentences.items():
-    new_symbols, new_accent_ids = symbols_normalize(
-      symbols=text_symbols.get_symbols(sentence.serialized_symbols),
-      lang=sentence.lang,
-      accent_ids=deserialize_list(sentence.serialized_accents),
-      logger=logger,
-    )
-    # TODO: check if new sentences resulted and then split them.
-    sentence.serialized_accents = serialize_list(new_accent_ids)
-    sents_new_symbols.append(new_symbols)
-
-  return update_symbols_and_text(sentences, sents_new_symbols)
-
-
-def sents_apply_mapping_table(sentences: SentenceList, text_symbols: SymbolIdDict, mapping_table: Dict[Tuple[str, ...], List[Tuple[Tuple[str, ...], float]]], seed: int) -> Tuple[SymbolIdDict, SentenceList]:
-  sents_new_symbols = []
+def __log_utterance(utterance: InferableUtterance, marker: Symbol) -> None:
   logger = getLogger(__name__)
-  random.seed(seed)
-  for sentence in sentences.items():
-    symbols = text_symbols.get_symbols(sentence.serialized_symbols)
-    words = sentence_to_words(symbols)
-    replaced_words = []
-    for word in words:
-      stripped_word = strip_word(word, symbols=STRIP_SYMBOLS)
-      stripped_word_tuple = tuple(stripped_word)
-      if stripped_word_tuple in mapping_table:
-        replaced_word_tuple = replace_with_prob(stripped_word_tuple, mapping_table)
-        if stripped_word_tuple != replaced_word_tuple:
-          replaced_word = list(replaced_word_tuple)
-          # TODO: implement this function
-          word_replaced = symbols_replace(word, stripped_word, replaced_word, ignore_case=True)
-          replaced_words.append(word_replaced)
-          logger.info(
-            f"Mapped \"{''.join(word)}\" to \"{''.join(word_replaced)}\" in sentence {sentence.sent_id}.")
-        else:
-          replaced_words.append(word)
-      else:
-        replaced_words.append(word)
-    new_symbols = words_to_sentence(replaced_words)
-    accent_ids = sentence.get_accent_ids()
-    new_accent_ids = [accent_ids[0]] * len(new_symbols) if len(accent_ids) > 0 else []
-    sentence.serialized_accents = serialize_list(new_accent_ids)
-    sents_new_symbols.append(new_symbols)
-
-  return update_symbols_and_text(sentences, sents_new_symbols)
+  utterance_id_str = f"{utterance.utterance_id}.: "
+  logger.info(
+    f"{utterance_id_str}{''.join(utterance.get_symbols_uninferable_marked(marker))}")
+  logger.info(
+    f"{len(utterance_id_str)*' '}{len(utterance.symbols)} {utterance.language} {utterance.symbols_format}")
+  if not utterance.can_all_symbols_be_inferred:
+    logger.warning("Not all symbols can be synthesized!")
 
 
-def update_symbols_and_text(sentences: SentenceList, sents_new_symbols: List[List[str]]):
-  symbols = SymbolIdDict.init_from_symbols(get_unique_items(sents_new_symbols))
-  for sentence, new_symbols in zip(sentences.items(), sents_new_symbols):
-    sentence.serialized_symbols = symbols.get_serialized_ids(new_symbols)
-    sentence.text = SymbolIdDict.symbols_to_text(new_symbols)
-    assert len(sentence.get_symbol_ids()) == len(new_symbols)
-    assert len(sentence.get_accent_ids()) == len(new_symbols)
-  return symbols, sentences
+def log_utterances(utterances: InferableUtterances, marker: Symbol) -> None:
+  for utterance in utterances:
+    __log_utterance(utterance, marker)
 
 
-def sents_convert_to_ipa(sentences: SentenceList, text_symbols: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, mode: Optional[EngToIpaMode], consider_ipa_annotations: bool, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
+def add_utterances_from_text(text: str, language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict) -> InferableUtterances:
+  new_utterances = InferableUtterances()
+  # each non-empty line is regarded as one utterance.
+  lines = text.split("\n")
+  non_empty_lines = [line for line in lines if line != ""]
+  for line_nr, line in enumerate(non_empty_lines, start=1):
+    symbols = text_to_symbols(line, text_format, language)
+    utterance = InferableUtterance(
+      utterance_id=line_nr,
+      language=language,
+      symbols=symbols,
+      symbols_format=text_format,
+      symbol_ids=symbol_id_dict.get_ids(symbols),
+    )
+    new_utterances.append(utterance)
+  return new_utterances
 
-  sents_new_symbols = []
-  for sentence in sentences.items(True):
-    if sentence.lang == Language.ENG and mode is None:
-      ex = "Please specify the ipa conversion mode."
-      logger.exception(ex)
-      raise Exception(ex)
-    new_symbols, new_accent_ids = symbols_to_ipa(
-      symbols=text_symbols.get_symbols(sentence.serialized_symbols),
-      lang=sentence.lang,
-      accent_ids=deserialize_list(sentence.serialized_accents),
-      ignore_arcs=ignore_arcs,
-      ignore_tones=ignore_tones,
+
+def utterances_split(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict) -> InferableUtterances:
+  new_utterances = InferableUtterances()
+  counter = 1
+  for utterance in utterances.items():
+    text_sentences = text_to_sentences(
+      text=''.join(utterance.symbols),
+      text_format=utterance.symbols_format,
+      lang=utterance.language,
+    )
+
+    for text_sentence in text_sentences:
+      symbols = text_to_symbols(text_sentence, utterance.symbols_format, utterance.language)
+      utterance = InferableUtterance(
+        utterance_id=counter,
+        language=utterance.language,
+        symbols=symbols,
+        symbols_format=utterance.symbols_format,
+        symbol_ids=symbol_id_dict.get_ids(symbols),
+      )
+      new_utterances.append(utterance)
+      counter += 1
+  return new_utterances
+
+
+def utterances_normalize(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict) -> None:
+  for utterance in utterances.items():
+    new_text = text_normalize(
+      text=''.join(utterance.symbols),
+      lang=utterance.language,
+      text_format=utterance.symbols_format,
+    )
+
+    new_symbols = text_to_symbols(
+      text=new_text,
+      lang=utterance.language,
+      text_format=utterance.symbols_format,
+    )
+
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
+
+
+def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, mode: Optional[EngToIPAMode], consider_ipa_annotations: Optional[bool]) -> None:
+  for utterance in utterances.items():
+    new_symbols, new_format = symbols_to_ipa(
+      symbols=utterance.symbols,
+      lang=utterance.language,
+      symbols_format=utterance.symbols_format,
       mode=mode,
-      replace_unknown_with=DEFAULT_PADDING_SYMBOL,
       consider_ipa_annotations=consider_ipa_annotations,
-      logger=logger,
-    )
-    assert len(new_symbols) == len(new_accent_ids)
-    sentence.lang = Language.IPA
-    sentence.serialized_accents = serialize_list(new_accent_ids)
-    sents_new_symbols.append(new_symbols)
-    assert len(sentence.get_accent_ids()) == len(new_symbols)
-
-  return update_symbols_and_text(sentences, sents_new_symbols)
-
-
-def sents_map(sentences: SentenceList, text_symbols: SymbolIdDict, symbols_map: SymbolsMap, ignore_arcs: bool, logger: Logger) -> Tuple[SymbolIdDict, SentenceList]:
-  sents_new_symbols = []
-  result = SentenceList()
-  new_sent_id = 0
-
-  ipa_settings = IPAExtractionSettings(
-    ignore_tones=False,
-    ignore_arcs=ignore_arcs,
-    replace_unknown_ipa_by=DEFAULT_PADDING_SYMBOL,
-  )
-
-  for sentence in sentences.items():
-    symbols = text_symbols.get_symbols(sentence.serialized_symbols)
-    accent_ids = deserialize_list(sentence.serialized_accents)
-
-    mapped_symbols = symbols_map.apply_to_symbols(symbols)
-
-    text = SymbolIdDict.symbols_to_text(mapped_symbols)
-    # a resulting empty text would make no problems
-    sents = text_to_sentences(
-      text=text,
-      lang=sentence.lang,
-      logger=logger,
     )
 
-    for new_sent_text in sents:
-      new_symbols = text_to_symbols(
-        new_sent_text,
-        lang=sentence.lang,
-        ipa_settings=ipa_settings,
-        logger=logger,
-      )
-
-      if len(accent_ids) > 0:
-        new_accent_ids = [accent_ids[0]] * len(new_symbols)
-      else:
-        new_accent_ids = []
-
-      assert len(new_accent_ids) == len(new_symbols)
-
-      new_sent_id += 1
-      tmp = Sentence(
-        sent_id=new_sent_id,
-        text=new_sent_text,
-        lang=sentence.lang,
-        orig_lang=sentence.orig_lang,
-        # this is not correct but nearest possible currently
-        original_text=sentence.original_text,
-        serialized_accents=serialize_list(new_accent_ids),
-        serialized_symbols=""
-      )
-      sents_new_symbols.append(new_symbols)
-
-      assert len(tmp.get_accent_ids()) == len(new_symbols)
-      result.append(tmp)
-
-  return update_symbols_and_text(result, sents_new_symbols)
+    utterance.symbols = new_symbols
+    utterance.symbols_format = new_format
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
 
 
-# def sents_rules(sentences: SentenceList, rules: str) -> SentenceList:
-#   pass
+def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool) -> None:
+  for utterance in utterances.items():
+    new_symbols = utterance.symbols
+
+    if ignore_arcs:
+      new_symbols = remove_arcs(new_symbols)
+
+    if ignore_tones:
+      new_symbols = remove_tones(new_symbols)
+
+    if ignore_stress:
+      new_symbols = remove_stress(new_symbols)
+
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
 
 
-# def sents_accent_template(sentences: SentenceList, text_symbols: SymbolIdDict, accent_ids: AccentsDict) -> AccentedSymbolList:
-#   res = AccentedSymbolList()
-#   for i, sent in enumerate(sentences.items()):
-#     symbols = text_symbols.get_symbols(sent.serialized_symbols)
-#     accents = accent_ids.get_accents(sent.serialized_accents)
-#     for j, symbol_accent in enumerate(zip(symbols, accents)):
-#       symbol, accent = symbol_accent
-#       accented_symbol = AccentedSymbol(
-#         position=f"{i}-{j}",
-#         symbol=symbol,
-#         accent=accent
-#       )
-#       res.append(accented_symbol)
-#   return res
+def utterances_apply_symbols_map(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, symbols_map: SymbolsMap) -> None:
+  for utterance in utterances.items():
+    new_symbols = symbols_map.apply_to_symbols(utterance.symbols)
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
 
 
-# def sents_accent_apply(sentences: SentenceList, accented_symbols: AccentedSymbolList, accent_ids: AccentsDict) -> SentenceList:
-#   current_index = 0
-#   for sent in sentences.items():
-#     accent_ids_count = len(deserialize_list(sent.serialized_accents))
-#     assert len(accented_symbols) >= current_index + accent_ids_count
-#     accented_symbol_selection: List[AccentedSymbol] = accented_symbols[current_index:current_index + accent_ids_count]
-#     current_index += accent_ids_count
-#     new_accent_ids = accent_ids.get_ids([x.accent for x in accented_symbol_selection])
-#     sent.serialized_accents = serialize_list(new_accent_ids)
-#     assert len(sent.get_accent_ids()) == len(sent.get_symbol_ids())
-#   return sentences
+def __get_pronunciation_from_mapping_table(word: Symbols, mapping_table: ProbabilitiesDict) -> Symbols:
+  if word not in mapping_table:
+    return word
+
+  word_replaced = replace_with_prob(word, mapping_table)
+  mapped_something = word != word_replaced
+  if mapped_something:
+    logger = getLogger(__name__)
+    logger.info(
+      f"Mapped \"{''.join(word)}\" to \"{''.join(word_replaced)}\".")
+  return word_replaced
 
 
-def prepare_for_inference(sentences: SentenceList, text_symbols: SymbolIdDict, text_accents: AccentsDict, known_symbols: SymbolIdDict, logger: Logger) -> InferSentenceList:
-  result = InferSentenceList.from_sentences(sentences, text_accents, text_symbols)
-  unknown_exist = result.replace_unknown_symbols(known_symbols, logger)
-  return result, unknown_exist
+def utterances_apply_mapping_table(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, probabilities_dict: ProbabilitiesDict, seed: int) -> None:
+  random.seed(seed)
+  get_pronun_method = partial(__get_pronunciation_from_mapping_table,
+                              mapping_table=probabilities_dict)
+  for utterance in utterances.items():
+    new_symbols = sentence2pronunciaton(
+      sentence=utterance.symbols,
+      trim_symbols=set(string.punctuation),
+      get_pronunciation=get_pronun_method,
+      split_on_hyphen=True,
+      consider_annotation=False,
+      annotation_split_symbol=None,
+    )
+
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
