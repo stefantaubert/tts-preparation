@@ -16,8 +16,6 @@ from tts_preparation.core.dummy_sentence2pronunciation import \
     sentence2pronunciaton
 from tts_preparation.utils import GenericList
 
-UNINFERABLE_SYMBOL_MARKER = "█"
-
 
 @dataclass
 class InferableUtterance:
@@ -41,16 +39,30 @@ class InferableUtterances(GenericList[InferableUtterance]):
   pass
 
 
-def log_utterance(utterance: InferableUtterance, marker: Symbol) -> None:
+def get_utterances_txt(utterances: InferableUtterances, marker: Symbol) -> str:
+  lines = []
+  for utterance in utterances.items():
+    line = f"{utterance.utterance_id}.: {''.join(utterance.get_symbols_uninferable_marked(marker))}"
+  return '\n'.join(lines)
+
+
+def __log_utterance(utterance: InferableUtterance, marker: Symbol) -> None:
   logger = getLogger(__name__)
-  utterance_id_str = f"{utterance.utterance_id}: "
+  utterance_id_str = f"{utterance.utterance_id}.: "
   logger.info(
     f"{utterance_id_str}{''.join(utterance.get_symbols_uninferable_marked(marker))}")
   logger.info(
     f"{len(utterance_id_str)*' '}{len(utterance.symbols)} {utterance.language} {utterance.symbols_format}")
+  if not utterance.can_all_symbols_be_inferred:
+    logger.warning("Not all symbols can be synthesized!")
 
 
-def add_text(text: str, language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict) -> InferableUtterances:
+def log_utterances(utterances: InferableUtterances, marker: Symbol) -> None:
+  for utterance in utterances:
+    __log_utterance(utterance, marker)
+
+
+def add_utterances_from_text(text: str, language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict) -> InferableUtterances:
   new_utterances = InferableUtterances()
   # each non-empty line is regarded as one utterance.
   lines = text.split("\n")
@@ -162,9 +174,10 @@ def __get_pronunciation_from_mapping_table(word: Symbols, mapping_table: Probabi
   return word_replaced
 
 
-def utterances_apply_mapping_table(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, mapping_table: ProbabilitiesDict, seed: int) -> None:
+def utterances_apply_mapping_table(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, probabilities_dict: ProbabilitiesDict, seed: int) -> None:
   random.seed(seed)
-  get_pronun_method = partial(__get_pronunciation_from_mapping_table, mapping_table=mapping_table)
+  get_pronun_method = partial(__get_pronunciation_from_mapping_table,
+                              mapping_table=probabilities_dict)
   for utterance in utterances.items():
     new_symbols = sentence2pronunciaton(
       sentence=utterance.symbols,

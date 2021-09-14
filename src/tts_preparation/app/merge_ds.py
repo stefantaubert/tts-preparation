@@ -5,19 +5,17 @@ from typing import List, Set, Tuple
 
 from speech_dataset_preprocessing import get_final_ds
 from speech_dataset_preprocessing.core.final import FinalDsEntryList
-from text_utils import SpeakersDict, SymbolIdDict
+from text_utils import SpeakersDict
 from text_utils.types import Speaker, Symbol
+from tts_preparation.app.io import (get_merged_dir,
+                                    load_merged_symbol_converter,
+                                    save_merged_symbol_converter)
 from tts_preparation.core.merge_ds import (DsName, PreparedDataList, merge,
                                            remove_unwanted_symbols)
-from tts_preparation.utils import get_subdir, load_obj, save_obj
+from tts_preparation.utils import load_obj, save_obj
 
 _merge_data_csv = "data.csv"
 _merge_speakers_json = "speakers.json"
-_merge_symbols_json = "symbols.json"
-
-
-def get_merged_dir(base_dir: Path, merge_name: str, create: bool = False) -> Path:
-  return get_subdir(base_dir, merge_name, create)
 
 
 def load_merged_data(merge_dir: Path) -> PreparedDataList:
@@ -38,16 +36,6 @@ def load_merged_speakers_json(merge_dir: Path) -> SpeakersDict:
 def save_merged_speakers_json(merge_dir: Path, speakers: SpeakersDict):
   path = merge_dir / _merge_speakers_json
   speakers.save(path)
-
-
-def load_merged_symbol_converter(merge_dir: Path) -> SymbolIdDict:
-  path = merge_dir / _merge_symbols_json
-  return SymbolIdDict.load_from_file(path)
-
-
-def save_merged_symbol_converter(merge_dir: Path, data: SymbolIdDict) -> None:
-  path = merge_dir / _merge_symbols_json
-  data.save(path)
 
 
 def merge_ds(base_dir: Path, sdp_dir: Path, merge_name: str, ds_speakers: List[Tuple[DsName, Speaker]], ds_text_audio: List[Tuple[DsName, str, str]], overwrite: bool = True) -> None:

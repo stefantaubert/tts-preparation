@@ -3,13 +3,12 @@ from logging import getLogger
 from pathlib import Path
 from typing import Optional
 
-from text_utils import (SymbolsMap, create_or_update_inference_map,
+from text_utils import (Symbols, SymbolsMap, create_or_update_inference_map,
                         create_or_update_weights_map)
-from text_utils.types import Symbols
 from tts_preparation.app.inference import get_all_symbols
-from tts_preparation.app.io import get_infer_map_path, infer_map_exists
-from tts_preparation.app.merge_ds import (get_merged_dir,
-                                          load_merged_symbol_converter)
+from tts_preparation.app.io import (get_infer_map_path, get_merged_dir,
+                                    infer_map_exists,
+                                    load_merged_symbol_converter)
 
 # maybe move it to each inference text dir
 INFER_MAP_SYMB_FN = "inference_map.symbols"
@@ -97,7 +96,7 @@ def create_or_update_inference_map_main(base_dir: Path, merge_name: str, templat
   logger = getLogger(__name__)
   logger.info("Creating/updating inference map...")
   merge_dir = get_merged_dir(base_dir, merge_name)
-  assert os.path.isdir(merge_dir)
+  assert merge_dir.is_dir()
 
   all_symbols = get_all_symbols(merge_dir)
 
