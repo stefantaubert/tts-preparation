@@ -11,8 +11,7 @@ from text_selection import (cover_symbols_default,
                             greedy_ngrams_seconds, n_divergent_random_seconds,
                             random_ngrams_cover_seconds, random_percent,
                             random_seconds)
-from text_utils import SymbolIdDict
-from text_utils.types import Symbol, Symbols
+from text_utils import Symbol, SymbolIdDict, Symbols
 from tts_preparation.core.data import (DatasetType, EntryId, PreparedDataList,
                                        get_speaker_wise)
 from tts_preparation.core.helper import (

@@ -43,6 +43,7 @@ def get_utterances_txt(utterances: InferableUtterances, marker: Symbol) -> str:
   lines = []
   for utterance in utterances.items():
     line = f"{utterance.utterance_id}.: {''.join(utterance.get_symbols_uninferable_marked(marker))}"
+    lines.append(line)
   return '\n'.join(lines)
 
 

@@ -19,7 +19,7 @@
         "accent-analyser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/accent-analyser.git",
-            "ref": "f1542a917e70be8122215e1cbc9611affd0ab08f"
+            "ref": "6124c6d02a8119021bddbe04deadd4021e1bbbe7"
         },
         "appdirs": {
             "hashes": [
@@ -842,7 +842,7 @@
         },
         "sentence2pronunciation": {
             "editable": true,
-            "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
+            "git": "https://github.com/jasminsternkopf/sentence2pronunciation.git",
             "ref": "eac27fe42dd0398a7110eb82fe375754ef30da55"
         },
         "six": {
@@ -871,12 +871,12 @@
         },
         "speech-dataset-parser": {
             "git": "https://github.com/stefantaubert/speech-dataset-parser.git",
-            "ref": "8939c3d397715183018dd54fec096da8d3923566"
+            "ref": "798650d50d7b4b553863838dc360d595d5774a49"
         },
         "speech-dataset-preprocessing": {
             "editable": true,
             "git": "https://github.com/stefantaubert/speech-dataset-preprocessing.git",
-            "ref": "42ade129cdc7651817e93fdd0858f3dce25abf3f"
+            "ref": "028643e04dbce6c3f1ef7fb3ddc6981187c88033"
         },
         "text-selection": {
             "editable": true,
@@ -886,7 +886,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "bbc0792bcb2cd91f5ed55794a58ec00a95686b7e"
+            "ref": "5fdacbf1efbe24fae4cfb8ef798bfaedd5274721"
         },
         "threadpoolctl": {
             "hashes": [
@@ -977,7 +977,7 @@
         "accent-analyser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/accent-analyser.git",
-            "ref": "f1542a917e70be8122215e1cbc9611affd0ab08f"
+            "ref": "6124c6d02a8119021bddbe04deadd4021e1bbbe7"
         },
         "appdirs": {
             "hashes": [
@@ -2051,7 +2051,7 @@
         },
         "sentence2pronunciation": {
             "editable": true,
-            "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
+            "git": "https://github.com/jasminsternkopf/sentence2pronunciation.git",
             "ref": "eac27fe42dd0398a7110eb82fe375754ef30da55"
         },
         "six": {
@@ -2080,12 +2080,12 @@
         },
         "speech-dataset-parser": {
             "git": "https://github.com/stefantaubert/speech-dataset-parser.git",
-            "ref": "8939c3d397715183018dd54fec096da8d3923566"
+            "ref": "798650d50d7b4b553863838dc360d595d5774a49"
         },
         "speech-dataset-preprocessing": {
             "editable": true,
             "git": "https://github.com/stefantaubert/speech-dataset-preprocessing.git",
-            "ref": "42ade129cdc7651817e93fdd0858f3dce25abf3f"
+            "ref": "028643e04dbce6c3f1ef7fb3ddc6981187c88033"
         },
         "text-selection": {
             "editable": true,
@@ -2095,7 +2095,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "bbc0792bcb2cd91f5ed55794a58ec00a95686b7e"
+            "ref": "5fdacbf1efbe24fae4cfb8ef798bfaedd5274721"
         },
         "threadpoolctl": {
             "hashes": [
