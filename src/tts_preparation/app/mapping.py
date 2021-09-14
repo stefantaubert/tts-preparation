@@ -3,8 +3,9 @@ from logging import getLogger
 from pathlib import Path
 from typing import Optional
 
-from text_utils import (Symbols, SymbolsMap, create_or_update_inference_map,
-                        create_or_update_weights_map)
+from text_utils import (INFERENCE_ARROW_TYPE, WEIGHTS_ARROW_TYPE, Symbols,
+                        SymbolsMap, create_or_update_inference_map,
+                        create_or_update_weights_map, print_map, print_symbols)
 from tts_preparation.app.inference import get_all_symbols
 from tts_preparation.app.io import (get_infer_map_path, get_merged_dir,
                                     infer_map_exists,
@@ -14,17 +15,20 @@ from tts_preparation.app.io import (get_infer_map_path, get_merged_dir,
 INFER_MAP_SYMB_FN = "inference_map.symbols"
 
 
-def save_infer_map(merge_dir: Path, infer_map: SymbolsMap) -> None:
-  infer_map.save(get_infer_map_path(merge_dir))
+def save_infer_map(merge_dir: Path, infer_map: SymbolsMap) -> Path:
+  path = get_infer_map_path(merge_dir)
+  infer_map.save(path)
+  return path
 
 
 def load_infer_map(merge_dir: Path) -> SymbolsMap:
   return SymbolsMap.load(get_infer_map_path(merge_dir))
 
 
-def save_weights_map(merge_dir: Path, orig_merge_name: str, weights_map: SymbolsMap) -> None:
+def save_weights_map(merge_dir: Path, orig_merge_name: str, weights_map: SymbolsMap) -> Path:
   path = merge_dir / f"{orig_merge_name}.json"
   weights_map.save(path)
+  return path
 
 
 def load_weights_map(merge_dir: Path, orig_merge_name: str) -> SymbolsMap:
@@ -47,14 +51,16 @@ def get_infer_symbols_path(merge_dir: Path) -> Path:
   return path
 
 
-def save_infer_symbols(merge_dir: Path, symbols: Symbols) -> None:
+def save_infer_symbols(merge_dir: Path, symbols: Symbols) -> Path:
   path = get_infer_symbols_path(merge_dir)
   save_symbols(path, symbols)
+  return path
 
 
-def save_weights_symbols(merge_dir: Path, weights_merge_name: str, symbols: Symbols) -> None:
+def save_weights_symbols(merge_dir: Path, weights_merge_name: str, symbols: Symbols) -> Path:
   path = merge_dir / f"{weights_merge_name}.symbols"
   save_symbols(path, symbols)
+  return path
 
 
 def save_symbols(path: Path, symbols: Symbols) -> None:
@@ -88,8 +94,10 @@ def create_or_update_weights_map_main(base_dir: Path, merge_name: str, weights_m
     template_map=_template_map,
   )
 
-  save_weights_map(merge_dir, weights_merge_name, weights_map)
-  save_weights_symbols(merge_dir, weights_merge_name, symbols)
+  resulting_map_path = save_weights_map(merge_dir, weights_merge_name, weights_map)
+  resulting_symbols_path = save_weights_symbols(merge_dir, weights_merge_name, symbols)
+  print_map(resulting_map_path, WEIGHTS_ARROW_TYPE)
+  print_symbols(resulting_symbols_path)
 
 
 def create_or_update_inference_map_main(base_dir: Path, merge_name: str, template_map: Optional[Path] = None) -> None:
@@ -117,5 +125,7 @@ def create_or_update_inference_map_main(base_dir: Path, merge_name: str, templat
     template_map=_template_map,
   )
 
-  save_infer_map(merge_dir, infer_map)
-  save_infer_symbols(merge_dir, symbols)
+  infer_map_path = save_infer_map(merge_dir, infer_map)
+  infer_symbols_path = save_infer_symbols(merge_dir, symbols)
+  print_map(infer_map_path, INFERENCE_ARROW_TYPE)
+  print_symbols(infer_symbols_path)

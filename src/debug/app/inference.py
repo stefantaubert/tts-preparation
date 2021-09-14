@@ -1,9 +1,9 @@
-from text_utils.symbols_map import create_or_update_inference_map
 from debug.globals import BASE_DIR
 from text_utils import Language, SymbolFormat
 from text_utils.pronunciation.main import EngToIPAMode
+from text_utils.symbols_map import create_or_update_inference_map
 from tts_preparation.app.inference import (add_text, ipa_convert_text,
-                                           normalize_text)
+                                           map_text, normalize_text)
 
 
 def main():
@@ -34,6 +34,13 @@ def main():
   #   consider_ipa_annotations=True,
   #   mode=EngToIPAMode.EPITRAN,
   # )
+
+  map_text(
+    base_dir=BASE_DIR,
+    merge_name=merge_name,
+    symbols_map_path=None,
+    text_name=text_name,
+  )
 
 
 if __name__ == "__main__":
