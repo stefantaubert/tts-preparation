@@ -23,8 +23,6 @@ UNINFERABLE_SYMBOL_MARKER = "█"
 class InferableUtterance:
   utterance_id: int
   language: Language
-  original_symbols: Symbols
-  original_symbols_format: SymbolFormat
   symbols: Symbols
   symbols_format: SymbolFormat
   symbol_ids: SymbolIds
@@ -46,15 +44,10 @@ class InferableUtterances(GenericList[InferableUtterance]):
 def log_utterance(utterance: InferableUtterance, marker: Symbol) -> None:
   logger = getLogger(__name__)
   utterance_id_str = f"{utterance.utterance_id}: "
-  logger.info(f"{utterance_id_str}{''.join(utterance.original_symbols)}")
   logger.info(
-    f"{len(utterance_id_str)*' '}{''.join(utterance.get_symbols_uninferable_marked(marker))} ({len(utterance.symbols)})")
-
-
-def get_symbol_ids(symbols: Symbols, symbol_id_dict: SymbolIdDict) -> SymbolIds:
-  symbol_ids = tuple(symbol_id_dict.get_id(symbol) if symbol_id_dict.symbol_exists(
-    symbol) else None for symbol in symbols)
-  return symbol_ids
+    f"{utterance_id_str}{''.join(utterance.get_symbols_uninferable_marked(marker))}")
+  logger.info(
+    f"{len(utterance_id_str)*' '}{len(utterance.symbols)} {utterance.language} {utterance.symbols_format}")
 
 
 def add_text(text: str, language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict) -> InferableUtterances:
@@ -67,11 +60,9 @@ def add_text(text: str, language: Language, text_format: SymbolFormat, symbol_id
     utterance = InferableUtterance(
       utterance_id=line_nr,
       language=language,
-      original_symbols=symbols,
-      original_symbols_format=text_format,
       symbols=symbols,
       symbols_format=text_format,
-      symbol_ids=get_symbol_ids(symbols, symbol_id_dict),
+      symbol_ids=symbol_id_dict.get_ids(symbols),
     )
     new_utterances.append(utterance)
   return new_utterances
@@ -92,11 +83,9 @@ def utterances_split(utterances: InferableUtterances, symbol_id_dict: SymbolIdDi
       utterance = InferableUtterance(
         utterance_id=counter,
         language=utterance.language,
-        original_symbols=symbols,
-        original_symbols_format=utterance.symbols_format,
         symbols=symbols,
         symbols_format=utterance.symbols_format,
-        symbol_ids=get_symbol_ids(symbols, symbol_id_dict),
+        symbol_ids=symbol_id_dict.get_ids(symbols),
       )
       new_utterances.append(utterance)
       counter += 1
@@ -118,7 +107,7 @@ def utterances_normalize(utterances: InferableUtterances, symbol_id_dict: Symbol
     )
 
     utterance.symbols = new_symbols
-    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
 
 
 def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, mode: Optional[EngToIPAMode], consider_ipa_annotations: Optional[bool]) -> None:
@@ -133,7 +122,7 @@ def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: S
 
     utterance.symbols = new_symbols
     utterance.symbols_format = new_format
-    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
 
 
 def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool) -> None:
@@ -150,23 +139,23 @@ def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: Symbo
       new_symbols = remove_stress(new_symbols)
 
     utterance.symbols = new_symbols
-    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
 
 
 def utterances_apply_symbols_map(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, symbols_map: SymbolsMap) -> None:
   for utterance in utterances.items():
     new_symbols = symbols_map.apply_to_symbols(utterance.symbols)
     utterance.symbols = new_symbols
-    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
 
 
-def get_pronunciation_from_mapping_table(word: Symbols, mapping_table: ProbabilitiesDict) -> Symbols:
+def __get_pronunciation_from_mapping_table(word: Symbols, mapping_table: ProbabilitiesDict) -> Symbols:
   if word not in mapping_table:
     return word
 
   word_replaced = replace_with_prob(word, mapping_table)
-  replaced_something = word != word_replaced
-  if replaced_something:
+  mapped_something = word != word_replaced
+  if mapped_something:
     logger = getLogger(__name__)
     logger.info(
       f"Mapped \"{''.join(word)}\" to \"{''.join(word_replaced)}\".")
@@ -175,7 +164,7 @@ def get_pronunciation_from_mapping_table(word: Symbols, mapping_table: Probabili
 
 def utterances_apply_mapping_table(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, mapping_table: ProbabilitiesDict, seed: int) -> None:
   random.seed(seed)
-  get_pronun_method = partial(get_pronunciation_from_mapping_table, mapping_table=mapping_table)
+  get_pronun_method = partial(__get_pronunciation_from_mapping_table, mapping_table=mapping_table)
   for utterance in utterances.items():
     new_symbols = sentence2pronunciaton(
       sentence=utterance.symbols,
@@ -187,4 +176,4 @@ def utterances_apply_mapping_table(utterances: InferableUtterances, symbol_id_di
     )
 
     utterance.symbols = new_symbols
-    utterance.symbol_ids = get_symbol_ids(new_symbols, symbol_id_dict)
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)

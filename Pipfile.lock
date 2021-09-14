@@ -19,7 +19,7 @@
         "accent-analyser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/accent-analyser.git",
-            "ref": "642576300edc02826a59c772382e082ca7367976"
+            "ref": "f1542a917e70be8122215e1cbc9611affd0ab08f"
         },
         "appdirs": {
             "hashes": [
@@ -843,7 +843,7 @@
         "sentence2pronunciation": {
             "editable": true,
             "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
-            "ref": "8716b3387e75f570bd929302099e766a2aa4ad9d"
+            "ref": "eac27fe42dd0398a7110eb82fe375754ef30da55"
         },
         "six": {
             "hashes": [
@@ -886,7 +886,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "14252246fd08cf2ed4e070cc3d52eec863efe0a2"
+            "ref": "bbc0792bcb2cd91f5ed55794a58ec00a95686b7e"
         },
         "threadpoolctl": {
             "hashes": [
@@ -977,7 +977,7 @@
         "accent-analyser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/accent-analyser.git",
-            "ref": "642576300edc02826a59c772382e082ca7367976"
+            "ref": "f1542a917e70be8122215e1cbc9611affd0ab08f"
         },
         "appdirs": {
             "hashes": [
@@ -2052,7 +2052,7 @@
         "sentence2pronunciation": {
             "editable": true,
             "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
-            "ref": "8716b3387e75f570bd929302099e766a2aa4ad9d"
+            "ref": "eac27fe42dd0398a7110eb82fe375754ef30da55"
         },
         "six": {
             "hashes": [
@@ -2095,7 +2095,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "14252246fd08cf2ed4e070cc3d52eec863efe0a2"
+            "ref": "bbc0792bcb2cd91f5ed55794a58ec00a95686b7e"
         },
         "threadpoolctl": {
             "hashes": [
