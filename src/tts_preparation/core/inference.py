@@ -47,20 +47,20 @@ def get_utterances_txt(utterances: InferableUtterances, marker: Symbol) -> str:
   return '\n'.join(lines)
 
 
-def __log_utterance(utterance: InferableUtterance, marker: Symbol) -> None:
+def log_utterance(utterance: InferableUtterance, marker: Symbol) -> None:
   logger = getLogger(__name__)
   utterance_id_str = f"{utterance.utterance_id}.: "
   logger.info(
     f"{utterance_id_str}{''.join(utterance.get_symbols_uninferable_marked(marker))}")
   logger.info(
-    f"{len(utterance_id_str)*' '}{len(utterance.symbols)} {utterance.language} {utterance.symbols_format}")
+    f"{len(utterance_id_str)*' '}{len(utterance.symbols)} {utterance.language!r} {utterance.symbols_format!r}")
   if not utterance.can_all_symbols_be_inferred:
     logger.warning("Not all symbols can be synthesized!")
 
 
 def log_utterances(utterances: InferableUtterances, marker: Symbol) -> None:
   for utterance in utterances:
-    __log_utterance(utterance, marker)
+    log_utterance(utterance, marker)
 
 
 def add_utterances_from_text(text: str, language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict) -> InferableUtterances:

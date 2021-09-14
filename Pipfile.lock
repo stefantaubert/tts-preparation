@@ -19,7 +19,7 @@
         "accent-analyser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/accent-analyser.git",
-            "ref": "6124c6d02a8119021bddbe04deadd4021e1bbbe7"
+            "ref": "9335ccd037fe0d44b0f220582693687241c6b968"
         },
         "appdirs": {
             "hashes": [
@@ -842,7 +842,7 @@
         },
         "sentence2pronunciation": {
             "editable": true,
-            "git": "https://github.com/jasminsternkopf/sentence2pronunciation.git",
+            "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
             "ref": "eac27fe42dd0398a7110eb82fe375754ef30da55"
         },
         "six": {
@@ -977,7 +977,7 @@
         "accent-analyser": {
             "editable": true,
             "git": "https://github.com/stefantaubert/accent-analyser.git",
-            "ref": "6124c6d02a8119021bddbe04deadd4021e1bbbe7"
+            "ref": "9335ccd037fe0d44b0f220582693687241c6b968"
         },
         "appdirs": {
             "hashes": [
@@ -2051,7 +2051,7 @@
         },
         "sentence2pronunciation": {
             "editable": true,
-            "git": "https://github.com/jasminsternkopf/sentence2pronunciation.git",
+            "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
             "ref": "eac27fe42dd0398a7110eb82fe375754ef30da55"
         },
         "six": {

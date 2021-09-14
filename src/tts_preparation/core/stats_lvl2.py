@@ -6,19 +6,19 @@ import pandas as pd
 from tts_preparation.core.data import DatasetType
 
 
-def get_one_gram_stats(stats: pd.DataFrame, ds: DatasetType):
+def get_one_gram_stats(stats: pd.DataFrame, ds: DatasetType) -> None:
   logger = getLogger(__name__)
   logger.info(f"Stats {str(ds)} onegrams")
   get_stats(stats, ds)
 
 
-def get_two_gram_stats(stats: pd.DataFrame, ds: DatasetType):
+def get_two_gram_stats(stats: pd.DataFrame, ds: DatasetType) -> None:
   logger = getLogger(__name__)
   logger.info(f"Stats {str(ds)} twograms")
   get_stats(stats, ds)
 
 
-def get_three_gram_stats(stats: pd.DataFrame, ds: DatasetType):
+def get_three_gram_stats(stats: pd.DataFrame, ds: DatasetType) -> None:
   logger = getLogger(__name__)
   logger.info(f"Stats {str(ds)} threegrams")
   get_stats(stats, ds)
@@ -33,7 +33,7 @@ def column_title(ds: DatasetType) -> str:
     return "VAL"
 
 
-def get_stats(stats: pd.DataFrame, ds: DatasetType):
+def get_stats(stats: pd.DataFrame, ds: DatasetType) -> None:
   logger = getLogger(__name__)
   title = column_title(ds)
   top_n_range = range(10, 110, 10)

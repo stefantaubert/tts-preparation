@@ -19,7 +19,7 @@ DsName = str
 
 def expand_speakers(speakers_to_ds_names: Dict[DsName, Set[Speaker]], ds_speakers: List[Tuple[DsName, Speaker]]) -> Dict[DsName, Set[Speaker]]:
   expanded_speakers: Dict[DsName, Set[Speaker]] = {
-    ds_name: {} for ds_name, _ in speakers_to_ds_names}
+    ds_name: set() for ds_name in speakers_to_ds_names}
   for ds_name, speaker_name in ds_speakers:
     if ds_name not in speakers_to_ds_names:
       continue
@@ -211,7 +211,7 @@ def set_rarities(data: PreparedDataList) -> None:
   logger.info("Done.")
 
 
-def log_stats(data: PreparedDataList, symbols: SymbolIdDict, speakers: SpeakersDict):
+def log_stats(data: PreparedDataList, symbols: SymbolIdDict, speakers: SpeakersDict) -> None:
   logger = getLogger(__name__)
   logger.info(f"Entries ({len(data)}): {data.total_duration_s/60:.2f}m")
   logger.info(f"Speakers ({len(speakers)}): {', '.join(sorted(speakers.get_all_speakers()))}")

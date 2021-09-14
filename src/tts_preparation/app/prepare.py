@@ -274,6 +274,9 @@ def app_prepare(base_dir: Path, merge_name: str, prep_name: str, overwrite: bool
       return
   merge_data = load_merged_data(merge_dir)
   prep_dir.mkdir(parents=True, exist_ok=False)
+  save_valset(prep_dir, PreparedDataList())
+  save_testset(prep_dir, PreparedDataList())
+  save_trainset(prep_dir, PreparedDataList())
   save_restset(prep_dir, merge_data)
   save_totalset(prep_dir, merge_data)
   logger.info("Done.")
@@ -282,11 +285,11 @@ def app_prepare(base_dir: Path, merge_name: str, prep_name: str, overwrite: bool
 
 def load_set(prep_dir: Path, dataset: DatasetType) -> PreparedDataList:
   if dataset == DatasetType.TRAINING:
-    return load_trainset(prep_dir) if get_trainset_path(prep_dir).is_file() else PreparedDataList()
+    return load_trainset(prep_dir)
   if dataset == DatasetType.VALIDATION:
-    return load_valset(prep_dir) if get_valset_path(prep_dir).is_file() else PreparedDataList()
+    return load_valset(prep_dir)
   if dataset == DatasetType.TEST:
-    return load_testset(prep_dir) if get_testset_path(prep_dir).is_file() else PreparedDataList()
+    return load_testset(prep_dir)
   raise Exception()
 
 
@@ -302,16 +305,11 @@ def _save_results(dest_prep_dir: Path, new_set: PreparedDataList, new_restset: P
 
 def copy_orig_to_dest_dir(orig_prep_dir: Path, dest_prep_dir: Path) -> None:
   dest_prep_dir.mkdir(parents=True, exist_ok=True)
-  if get_trainset_path(orig_prep_dir).is_file():
-    save_trainset(dest_prep_dir, load_trainset(orig_prep_dir))
-  if get_valset_path(orig_prep_dir).is_file():
-    save_valset(dest_prep_dir, load_valset(orig_prep_dir))
-  if get_testset_path(orig_prep_dir).is_file():
-    save_testset(dest_prep_dir, load_testset(orig_prep_dir))
-  if get_restset_path(orig_prep_dir).is_file():
-    save_restset(dest_prep_dir, load_restset(orig_prep_dir))
-  if get_totalset_path(orig_prep_dir).is_file():
-    save_totalset(dest_prep_dir, load_totalset(orig_prep_dir))
+  save_trainset(dest_prep_dir, load_trainset(orig_prep_dir))
+  save_valset(dest_prep_dir, load_valset(orig_prep_dir))
+  save_testset(dest_prep_dir, load_testset(orig_prep_dir))
+  save_restset(dest_prep_dir, load_restset(orig_prep_dir))
+  save_totalset(dest_prep_dir, load_totalset(orig_prep_dir))
 
 
 def app_add_rest(base_dir: Path, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, overwrite: bool = True) -> None:
@@ -510,12 +508,10 @@ def __add(base_dir: Path, merge_name: str, orig_prep_name: str, dest_prep_name: 
   if not overwrite and dest_prep_dir.is_dir():
     logger.info("Already exists.")
   orig_prep_dir = get_prep_dir(merge_dir, orig_prep_name, create=False)
-  symbols = load_merged_symbol_converter(merge_dir)
 
   new_set, new_restset = func(
     existing_set=load_set(orig_prep_dir, dataset),
     restset=load_restset(orig_prep_dir),
-    symbols=symbols,
     **kwargs,
   )
 

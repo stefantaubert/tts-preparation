@@ -9,7 +9,7 @@ from text_utils.symbol_format import SymbolFormat
 from text_utils.types import Speaker, SpeakerId, SymbolIds, Symbols
 from tts_preparation.utils import GenericList
 
-EntryId: int
+EntryId = int
 
 
 @dataclass()
@@ -68,11 +68,11 @@ class PreparedDataList(GenericList[PreparedData]):
 
 
 def get_speaker_wise(data: PreparedDataList) -> Dict[Speaker, PreparedDataList]:
-  speaker_data: Dict[Speaker, List[PreparedDataList]] = {}
+  speaker_data: Dict[Speaker, PreparedDataList] = {}
   for entry in data.items():
     if entry.speaker_name not in speaker_data:
-      speaker_data[data.speaker_name] = PreparedDataList()
-    speaker_data[data.speaker_name].append(data)
+      speaker_data[entry.speaker_name] = PreparedDataList()
+    speaker_data[entry.speaker_name].append(entry)
   return speaker_data
 
 

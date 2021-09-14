@@ -14,7 +14,7 @@ from tts_preparation.app.io import (get_infer_map_path, get_merged_dir,
 INFER_MAP_SYMB_FN = "inference_map.symbols"
 
 
-def save_infer_map(merge_dir: Path, infer_map: SymbolsMap):
+def save_infer_map(merge_dir: Path, infer_map: SymbolsMap) -> None:
   infer_map.save(get_infer_map_path(merge_dir))
 
 
@@ -34,7 +34,7 @@ def load_weights_map(merge_dir: Path, orig_merge_name: str) -> SymbolsMap:
 
 def weights_map_exists(merge_dir: Path, orig_merge_name: str) -> bool:
   path = merge_dir / f"{orig_merge_name}.json"
-  return os.path.isfile(path)
+  return path.is_file()
 
 
 def try_load_symbols_map(symbols_map_path: Path) -> Optional[SymbolsMap]:
@@ -47,26 +47,26 @@ def get_infer_symbols_path(merge_dir: Path) -> Path:
   return path
 
 
-def save_infer_symbols(merge_dir: Path, symbols: Symbols):
+def save_infer_symbols(merge_dir: Path, symbols: Symbols) -> None:
   path = get_infer_symbols_path(merge_dir)
   save_symbols(path, symbols)
 
 
-def save_weights_symbols(merge_dir: Path, weights_merge_name: str, symbols: Symbols):
+def save_weights_symbols(merge_dir: Path, weights_merge_name: str, symbols: Symbols) -> None:
   path = merge_dir / f"{weights_merge_name}.symbols"
   save_symbols(path, symbols)
 
 
-def save_symbols(path: Path, symbols: Symbols):
+def save_symbols(path: Path, symbols: Symbols) -> None:
   with path.open(mode='w', encoding='utf-8') as f:
     f.write('\n'.join([f"\"{symbol}\"" for symbol in symbols]))
 
 
 def create_or_update_weights_map_main(base_dir: Path, merge_name: str, weights_merge_name: str, template_map: Optional[str] = None) -> None:
   merge_dir = get_merged_dir(base_dir, merge_name)
-  assert os.path.isdir(merge_dir)
+  assert merge_dir.is_dir()
   orig_prep_dir = get_merged_dir(base_dir, weights_merge_name)
-  assert os.path.isdir(orig_prep_dir)
+  assert orig_prep_dir.is_dir()
 
   logger = getLogger(__name__)
   logger.info(f"Creating/updating weights map for {weights_merge_name}...")

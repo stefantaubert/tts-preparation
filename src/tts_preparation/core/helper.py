@@ -8,11 +8,11 @@ from tts_preparation.core.data import EntryId, PreparedDataList
 from tts_preparation.globals import DEFAULT_PADDING_SYMBOL
 
 
-def get_percent(l: int, total: int):
+def get_percent(l: int, total: int) -> None:
   return l / total * 100 if total > 0 else 0
 
 
-def get_percent_str(l: int, total: int):
+def get_percent_str(l: int, total: int) -> None:
   p = get_percent(l, total)
   res = f"{p:.2f}%"
   return res

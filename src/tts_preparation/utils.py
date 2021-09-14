@@ -1,8 +1,8 @@
-import pickle
 import json
 import logging
 import math
 import os
+import pickle
 import random
 import tarfile
 import unicodedata
@@ -81,7 +81,7 @@ def set_types_according_to_dataclass(params: Dict[str, str], hparams: _T) -> Non
     params[custom_hparam] = get_value_in_type(hparam_value, new_value)
 
 
-def update_learning_rate_optimizer(optimizer: Optimizer, learning_rate: float):
+def update_learning_rate_optimizer(optimizer: Optimizer, learning_rate: float) -> None:
   for param_group in optimizer.param_groups:
     param_group['lr'] = learning_rate
 
@@ -187,7 +187,7 @@ def cast_as(obj, _: _T) -> _T:
   return obj
 
 
-def pass_lines(method: Any, text: str):
+def pass_lines(method: Any, text: str) -> None:
   lines = text.split("\n")
   for l in lines:
     method(l)
@@ -200,34 +200,34 @@ def figure_to_numpy_rgb(figure: Figure) -> np.ndarray:
   return data
 
 
-def get_filenames(parent_dir: str) -> List[str]:
-  assert os.path.isdir(parent_dir)
+def get_filenames(parent_dir: Path) -> List[str]:
+  assert parent_dir.is_dir()
   _, _, filenames = next(os.walk(parent_dir))
   filenames.sort()
   return filenames
 
 
-def get_filepaths(parent_dir: str) -> List[str]:
+def get_filepaths(parent_dir: Path) -> List[str]:
   names = get_filenames(parent_dir)
   res = [os.path.join(parent_dir, x) for x in names]
   return res
 
 
-def get_subfolder_names(parent_dir: str) -> List[str]:
-  assert os.path.isdir(parent_dir)
+def get_subfolder_names(parent_dir: Path) -> List[str]:
+  assert parent_dir.is_dir()
   _, subfolder_names, _ = next(os.walk(parent_dir))
   subfolder_names.sort()
   return subfolder_names
 
 
-def get_subfolders(parent_dir: str) -> List[str]:
+def get_subfolders(parent_dir: Path) -> List[str]:
   """return full paths"""
   names = get_subfolder_names(parent_dir)
   res = [os.path.join(parent_dir, x) for x in names]
   return res
 
 
-def console_out_len(text: str):
+def console_out_len(text: str) -> None:
   res = len([c for c in text if unicodedata.combining(c) == 0])
   return res
 
@@ -334,7 +334,7 @@ def load_df(path: str) -> pd.DataFrame:
   return data
 
 
-def save_df(dataframe: pd.DataFrame, path: str, header_columns: Optional[List[str]]):
+def save_df(dataframe: pd.DataFrame, path: str, header_columns: Optional[List[str]]) -> None:
   dataframe.to_csv(path, header=header_columns, index=None, sep=DEFAULT_CSV_SEPERATOR)
 
 
@@ -455,7 +455,7 @@ def args_to_str(args) -> str:
 
 
 def parse_json(path: str) -> dict:
-  assert os.path.isfile(path)
+  assert path.is_file()
   with open(path, 'r', encoding='utf-8') as f:
     tmp = json.load(f)
   return tmp
@@ -467,7 +467,7 @@ def save_json(path: str, mapping_dict: Dict) -> None:
 
 
 def read_lines(path: str) -> List[str]:
-  assert os.path.isfile(path)
+  assert path.is_file()
   with open(path, "r", encoding='utf-8') as f:
     lines = f.readlines()
   res = [x.strip("\n") for x in lines]

@@ -15,7 +15,7 @@ from tts_preparation.core.stats import (
     get_rel_occ_df_of_all_symbols)
 
 
-def log_general_stats(trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList, data: PreparedDataList):
+def log_general_stats(trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList, data: PreparedDataList) -> None:
   logger = getLogger(__name__)
   total_set = get_total_set(trainset, valset, testset, restset)
   len_except_rest = len(trainset) + len(testset) + len(valset)
@@ -32,7 +32,7 @@ def log_general_stats(trainset: PreparedDataList, valset: PreparedDataList, test
   logger.info(f"Something lost: {'no' if len(total_set) == len(data) else 'yes!'}")
 
 
-def get_speaker_stats(symbols: SymbolIdDict, speakers: SpeakersDict, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList):
+def get_speaker_stats(symbols: SymbolIdDict, speakers: SpeakersDict, trainset: PreparedDataList, valset: PreparedDataList, testset: PreparedDataList, restset: PreparedDataList) -> None:
   speaker_order = list(sorted(speakers.get_all_speakers()))
   chars_dfs, chars = _get_chars_stats(
     speaker_order=speaker_order,

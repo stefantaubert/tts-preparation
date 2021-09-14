@@ -56,7 +56,7 @@ def load_utterances(text_dir: Path) -> InferableUtterances:
   return load_obj(path)
 
 
-def __save_utterances(text_dir: Path, utterances: InferableUtterances):
+def __save_utterances(text_dir: Path, utterances: InferableUtterances) -> None:
   path = text_dir / UTTERANCES_PKL
   save_obj(utterances, path)
 

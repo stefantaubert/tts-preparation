@@ -23,7 +23,7 @@ from tts_preparation.core.stats_lvl2 import (get_one_gram_stats,
 
 
 def add_rest(existing_set: PreparedDataList, restset: PreparedDataList) -> Tuple[PreparedDataList, PreparedDataList]:
-  new_set = existing_set + restset
+  new_set = PreparedDataList(existing_set + restset)
   new_restset = PreparedDataList()
   return new_set, new_restset
 
@@ -142,7 +142,7 @@ def __add_random_percent(speaker_available: PreparedDataList, speaker_existing: 
   return random_percent(speaker_available_dict, seed, percent)
 
 
-def add_symbols(existing_set: PreparedDataList, restset: PreparedDataList, cover_symbols: Set[Symbol]):
+def add_symbols(existing_set: PreparedDataList, restset: PreparedDataList, cover_symbols: Set[Symbol]) -> None:
   return __add(
     existing_set=existing_set,
     restset=restset,
@@ -156,7 +156,7 @@ def __add_symbols(speaker_available: PreparedDataList, speaker_existing: Prepare
   return cover_symbols_default(speaker_available_dict, cover_symbols)
 
 
-def add_random_seconds(existing_set: PreparedDataList, restset: PreparedDataList, symbols: SymbolIdDict, seed: int, seconds: float, respect_existing: bool):
+def add_random_seconds(existing_set: PreparedDataList, restset: PreparedDataList, symbols: SymbolIdDict, seed: int, seconds: float, respect_existing: bool) -> None:
   return __add(
     existing_set=existing_set,
     restset=restset,
@@ -179,7 +179,7 @@ def __add_random_seconds(speaker_available: PreparedDataList, speaker_existing: 
   return random_seconds(speaker_available_dict, seed, speaker_avail_durations_s, seconds)
 
 
-def add_random_ngram_cover_seconds(existing_set: PreparedDataList, restset: PreparedDataList, n_gram: int, ignore_symbols: Optional[Set[Symbol]], seed: int, seconds: float):
+def add_random_ngram_cover_seconds(existing_set: PreparedDataList, restset: PreparedDataList, n_gram: int, ignore_symbols: Optional[Set[Symbol]], seed: int, seconds: float) -> None:
   return __add(
     existing_set=existing_set,
     restset=restset,
@@ -197,7 +197,7 @@ def __add_random_ngram_cover_seconds(speaker_available: PreparedDataList, speake
   return random_ngrams_cover_seconds(speaker_available_dict, n_gram, ignore_symbols, seed, speaker_avail_durations_s, seconds)
 
 
-def add_ngram_cover(existing_set: PreparedDataList, restset: PreparedDataList, n_gram: int, ignore_symbols: Optional[Set[Symbol]], top_percent: Optional[float]):
+def add_ngram_cover(existing_set: PreparedDataList, restset: PreparedDataList, n_gram: int, ignore_symbols: Optional[Set[Symbol]], top_percent: Optional[float]) -> None:
   return __add(
     existing_set=existing_set,
     restset=restset,
@@ -253,7 +253,7 @@ def __add_greedy_ngram_epochs(speaker_available: PreparedDataList, speaker_exist
   return greedy_ngrams_epochs(speaker_available_dict, n_gram, ignore_symbols, epochs)
 
 
-def add_greedy_kld_ngram_seconds(existing_set: PreparedDataList, restset: PreparedDataList, n_gram: int, ignore_symbols: Optional[Set[Symbol]], seconds: float):
+def add_greedy_kld_ngram_seconds(existing_set: PreparedDataList, restset: PreparedDataList, n_gram: int, ignore_symbols: Optional[Set[Symbol]], seconds: float) -> None:
   return __add(
     existing_set=existing_set,
     restset=restset,

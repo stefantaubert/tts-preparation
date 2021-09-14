@@ -33,7 +33,7 @@ def load_merged_speakers_json(merge_dir: Path) -> SpeakersDict:
   return SpeakersDict.load(path)
 
 
-def save_merged_speakers_json(merge_dir: Path, speakers: SpeakersDict):
+def save_merged_speakers_json(merge_dir: Path, speakers: SpeakersDict) -> None:
   path = merge_dir / _merge_speakers_json
   speakers.save(path)
 
@@ -74,7 +74,7 @@ def merge_ds(base_dir: Path, sdp_dir: Path, merge_name: str, ds_speakers: List[T
   logger.info("Done.")
 
 
-def ds_filter_symbols(base_dir: str, orig_merge_name: str, dest_merge_name: str, allowed_symbols: Set[Symbol], overwrite: bool = True):
+def ds_filter_symbols(base_dir: Path, orig_merge_name: str, dest_merge_name: str, allowed_symbols: Set[Symbol], overwrite: bool = True) -> None:
   logger = getLogger(__name__)
   dest_merge_dir = get_merged_dir(base_dir, dest_merge_name)
 
