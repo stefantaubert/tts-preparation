@@ -9,7 +9,7 @@ from text_selection.metrics_export import get_rarity_ngrams
 from text_utils.speakers_dict import SpeakersDict
 from text_utils.symbol_id_dict import SymbolIdDict
 from text_utils.types import Speaker, Symbol
-from tts_preparation.core.data import PreparedData, PreparedDataList
+from tts_preparation.core.data import EntryId, PreparedData, PreparedDataList
 from tts_preparation.globals import DEFAULT_PADDING_SYMBOL
 
 ALL_SPEAKERS_INDICATOR = "all"
@@ -128,14 +128,15 @@ def merge_final_datasets(datasets: List[Tuple[DsName, FinalDsEntryList]], ds_spe
 
 def map_to_prepared_data(data: FinalDsEntryList) -> PreparedDataList:
   result = PreparedDataList(
-     map_final_ds_entry_to_prepared_data_entry(entry) for entry in data.items()
+     map_final_ds_entry_to_prepared_data_entry(entry, entry_id) for entry_id, entry in enumerate(data.items())
   )
   return result
 
 
-def map_final_ds_entry_to_prepared_data_entry(entry: FinalDsEntry) -> PreparedData:
+def map_final_ds_entry_to_prepared_data_entry(entry: FinalDsEntry, entry_id: EntryId) -> PreparedData:
   prep_entry = PreparedData(
-    entry_id=entry.entry_id,
+    entry_id=entry_id,
+    ds_entry_id=entry.entry_id,
     identifier=entry.identifier,
     mel_absolute_path=entry.mel_absolute_path,
     mel_n_channels=entry.mel_n_channels,

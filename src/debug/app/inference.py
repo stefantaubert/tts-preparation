@@ -8,7 +8,7 @@ from tts_preparation.app.inference import (add_text, change_ipa_text,
 
 def main():
 
-  merge_name = "debug_ljs_test"
+  merge_name = "debug_ljs_test2"
   text_name = "debug"
 
   add_text(

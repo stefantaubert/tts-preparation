@@ -15,6 +15,7 @@ EntryId = int
 @dataclass()
 class PreparedData:
   entry_id: EntryId
+  ds_entry_id: EntryId
   identifier: str
   speaker_id: SpeakerId
   speaker_name: Speaker
