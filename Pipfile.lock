@@ -97,11 +97,11 @@
         },
         "charset-normalizer": {
             "hashes": [
-                "sha256:0c8911edd15d19223366a194a513099a302055a962bca2cec0f54b8b63175d8b",
-                "sha256:f23667ebe1084be45f6ae0538e4a5a865206544097e4e8bbcacf42cd02a348f3"
+                "sha256:7098e7e862f6370a2a8d1a6398cd359815c45d12626267652c3f13dec58e2367",
+                "sha256:fa471a601dfea0f492e4f4fca035cd82155e65dc45c9b83bf4322dfab63755dd"
             ],
             "markers": "python_version >= '3'",
-            "version": "==2.0.4"
+            "version": "==2.0.5"
         },
         "click": {
             "hashes": [
@@ -184,7 +184,7 @@
         },
         "g2p-en": {
             "git": "https://github.com/stefantaubert/g2p",
-            "ref": "a115bdf9260ae56faafafc5d64c4c85adaf07cac"
+            "ref": "ec3905003a9726d2a5ad7ab435994c0ee9c2bae0"
         },
         "hanzidentifier": {
             "hashes": [
@@ -843,7 +843,7 @@
         "sentence2pronunciation": {
             "editable": true,
             "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
-            "ref": "eac27fe42dd0398a7110eb82fe375754ef30da55"
+            "ref": "0838a82d269ca16b2765960fb6203f128c0bbbe2"
         },
         "six": {
             "hashes": [
@@ -876,7 +876,7 @@
         "speech-dataset-preprocessing": {
             "editable": true,
             "git": "https://github.com/stefantaubert/speech-dataset-preprocessing.git",
-            "ref": "028643e04dbce6c3f1ef7fb3ddc6981187c88033"
+            "ref": "5301f1ee9a4b5e934bb3f5319b77827918495d3e"
         },
         "text-selection": {
             "editable": true,
@@ -886,7 +886,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "5fdacbf1efbe24fae4cfb8ef798bfaedd5274721"
+            "ref": "bc6de4d364e1ec2977f795a755f70bddc6cb08b4"
         },
         "threadpoolctl": {
             "hashes": [
@@ -1100,11 +1100,11 @@
         },
         "charset-normalizer": {
             "hashes": [
-                "sha256:0c8911edd15d19223366a194a513099a302055a962bca2cec0f54b8b63175d8b",
-                "sha256:f23667ebe1084be45f6ae0538e4a5a865206544097e4e8bbcacf42cd02a348f3"
+                "sha256:7098e7e862f6370a2a8d1a6398cd359815c45d12626267652c3f13dec58e2367",
+                "sha256:fa471a601dfea0f492e4f4fca035cd82155e65dc45c9b83bf4322dfab63755dd"
             ],
             "markers": "python_version >= '3'",
-            "version": "==2.0.4"
+            "version": "==2.0.5"
         },
         "click": {
             "hashes": [
@@ -1210,7 +1210,7 @@
         },
         "g2p-en": {
             "git": "https://github.com/stefantaubert/g2p",
-            "ref": "a115bdf9260ae56faafafc5d64c4c85adaf07cac"
+            "ref": "ec3905003a9726d2a5ad7ab435994c0ee9c2bae0"
         },
         "hanzidentifier": {
             "hashes": [
@@ -2052,7 +2052,7 @@
         "sentence2pronunciation": {
             "editable": true,
             "git": "https://github.com/jasminsternkopf/sentence2pronunciation",
-            "ref": "eac27fe42dd0398a7110eb82fe375754ef30da55"
+            "ref": "0838a82d269ca16b2765960fb6203f128c0bbbe2"
         },
         "six": {
             "hashes": [
@@ -2085,7 +2085,7 @@
         "speech-dataset-preprocessing": {
             "editable": true,
             "git": "https://github.com/stefantaubert/speech-dataset-preprocessing.git",
-            "ref": "028643e04dbce6c3f1ef7fb3ddc6981187c88033"
+            "ref": "5301f1ee9a4b5e934bb3f5319b77827918495d3e"
         },
         "text-selection": {
             "editable": true,
@@ -2095,7 +2095,7 @@
         "text-utils": {
             "editable": true,
             "git": "https://github.com/stefantaubert/text-utils.git",
-            "ref": "5fdacbf1efbe24fae4cfb8ef798bfaedd5274721"
+            "ref": "bc6de4d364e1ec2977f795a755f70bddc6cb08b4"
         },
         "threadpoolctl": {
             "hashes": [

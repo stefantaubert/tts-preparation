@@ -7,14 +7,14 @@ from typing import Optional
 
 from accent_analyser.core.word_probabilities import (ProbabilitiesDict,
                                                      replace_with_prob)
+from sentence2pronunciation import clear_cache, sentence2pronunciation_cached
+from sentence2pronunciation.core import sentence2pronunciation
 from text_utils import (EngToIPAMode, Language, Symbol, SymbolFormat,
                         SymbolIdDict, SymbolIds, Symbols, remove_arcs,
                         remove_stress, remove_tones, symbols_to_ipa,
                         text_normalize, text_to_sentences, text_to_symbols)
 from text_utils.symbols_map import SymbolsMap
-from tts_preparation.core.dummy_sentence2pronunciation import \
-    sentence2pronunciaton
-from tts_preparation.utils import GenericList
+from tts_preparation.utils import GenericList, console_out_len
 
 
 @dataclass
@@ -26,7 +26,7 @@ class InferableUtterance:
   symbol_ids: SymbolIds
 
   def get_symbols_uninferable_marked(self, marker: Symbol) -> Symbols:
-    result = tuple(symbol if symbol_id is not None else marker for symbol,
+    result = tuple(symbol if symbol_id is not None else marker * console_out_len(symbol) for symbol,
                    symbol_id in zip(self.symbols, self.symbol_ids))
     return result
 
@@ -52,6 +52,10 @@ def log_utterance(utterance: InferableUtterance, marker: Symbol) -> None:
   utterance_id_str = f"{utterance.utterance_id}.: "
   logger.info(
     f"{utterance_id_str}{''.join(utterance.get_symbols_uninferable_marked(marker))}")
+  if not utterance.can_all_symbols_be_inferred:
+    logger.info(
+        f"{(len(utterance_id_str)-1)*' '}({''.join(utterance.symbols)})")
+
   logger.info(
     f"{len(utterance_id_str)*' '}{len(utterance.symbols)} {utterance.language!r} {utterance.symbols_format!r}")
   if not utterance.can_all_symbols_be_inferred:
@@ -136,6 +140,8 @@ def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: S
     utterance.symbols = new_symbols
     utterance.symbols_format = new_format
     utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
+  # TODO use text-utils method for clear
+  clear_cache()
 
 
 def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool) -> None:
@@ -180,7 +186,7 @@ def utterances_apply_mapping_table(utterances: InferableUtterances, symbol_id_di
   get_pronun_method = partial(__get_pronunciation_from_mapping_table,
                               mapping_table=probabilities_dict)
   for utterance in utterances.items():
-    new_symbols = sentence2pronunciaton(
+    new_symbols = sentence2pronunciation(
       sentence=utterance.symbols,
       trim_symbols=set(string.punctuation),
       get_pronunciation=get_pronun_method,

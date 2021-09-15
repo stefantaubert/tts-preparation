@@ -18,6 +18,7 @@ import pandas as pd
 import wget
 from matplotlib.figure import Figure
 from scipy.spatial.distance import cosine
+from text_utils.types import Symbol
 from torch.optim.optimizer import \
     Optimizer  # pylint: disable=no-name-in-module
 from tqdm import tqdm
@@ -227,8 +228,8 @@ def get_subfolders(parent_dir: Path) -> List[str]:
   return res
 
 
-def console_out_len(text: str) -> None:
-  res = len([c for c in text if unicodedata.combining(c) == 0])
+def console_out_len(symbol: Symbol) -> None:
+  res = len([c for c in symbol if unicodedata.combining(c) == 0])
   return res
 
 # TODO: tests
