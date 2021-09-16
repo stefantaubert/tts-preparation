@@ -10,10 +10,10 @@ from accent_analyser.core.word_probabilities import (ProbabilitiesDict,
 from sentence2pronunciation import clear_cache, sentence2pronunciation_cached
 from sentence2pronunciation.core import sentence2pronunciation
 from text_utils import (EngToIPAMode, Language, Symbol, SymbolFormat,
-                        SymbolIdDict, SymbolIds, Symbols, remove_arcs,
-                        remove_stress, remove_tones, symbols_to_ipa,
-                        text_normalize, text_to_sentences, text_to_symbols)
-from text_utils.symbols_map import SymbolsMap
+                        SymbolIdDict, SymbolIds, Symbols, SymbolsMap,
+                        break_n_thongs, remove_arcs, remove_stress,
+                        remove_tones, symbols_to_ipa, text_normalize,
+                        text_to_sentences, text_to_symbols)
 from tts_preparation.utils import GenericList, console_out_len
 
 
@@ -144,7 +144,7 @@ def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: S
   clear_cache()
 
 
-def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool) -> None:
+def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_all_n_thongs: bool) -> None:
   for utterance in utterances.items():
     new_symbols = utterance.symbols
 
@@ -156,6 +156,9 @@ def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: Symbo
 
     if ignore_stress:
       new_symbols = remove_stress(new_symbols)
+
+    if break_all_n_thongs:
+      new_symbols = break_n_thongs(new_symbols)
 
     utterance.symbols = new_symbols
     utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)

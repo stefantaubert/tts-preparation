@@ -170,7 +170,7 @@ def ipa_convert_text(base_dir: Path, merge_name: str, text_name: str, consider_i
   __check_for_unknown_symbols(utterances)
 
 
-def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool) -> None:
+def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_all_n_thongs: bool) -> None:
   logger = getLogger(__name__)
   merge_dir = get_merged_dir(base_dir, merge_name, create=False)
   text_dir = get_text_dir(merge_dir, text_name, create=False)
@@ -186,6 +186,7 @@ def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tone
     ignore_arcs=ignore_arcs,
     ignore_stress=ignore_stress,
     ignore_tones=ignore_tones,
+    break_all_n_thongs=break_all_n_thongs,
   )
 
   text_dir = get_text_dir(merge_dir, text_name, create=True)
