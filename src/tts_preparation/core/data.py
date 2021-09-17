@@ -123,7 +123,7 @@ class DatasetType(IntEnum):
 #       item.load_init()
 
 #   def get_total_duration_s(self):
-#     durations = [x.duration_s for x in self.items()]
+#     durations = [x.wav_duration for x in self.items()]
 #     total_duration = sum(durations)
 #     return total_duration
 

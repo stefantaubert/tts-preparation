@@ -58,7 +58,7 @@ def prep_data_list_to_dict_with_symbols(data: PreparedDataList) -> OrderedDictTy
 
 
 def prep_data_list_to_dict_with_durations_s(data: PreparedDataList) -> OrderedDictType[EntryId, float]:
-  res = OrderedDict({entry.entry_id: entry.duration_s for entry in data.items()})
+  res = OrderedDict({entry.entry_id: entry.wav_duration for entry in data.items()})
   return res
 
 

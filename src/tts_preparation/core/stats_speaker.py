@@ -314,15 +314,15 @@ def _get_speaker_duration_stats(speaker_order: Speakers, trainset: PreparedDataL
 
   for speaker in speaker_order:
     if speaker in trn_speaker:
-      trn_durations[speaker] = [entry.duration_s for entry in trn_speaker[speaker].items()]
+      trn_durations[speaker] = [entry.wav_duration for entry in trn_speaker[speaker].items()]
     if speaker in val_speaker:
-      val_durations[speaker] = [entry.duration_s for entry in val_speaker[speaker].items()]
+      val_durations[speaker] = [entry.wav_duration for entry in val_speaker[speaker].items()]
     if speaker in tst_speaker:
-      tst_durations[speaker] = [entry.duration_s for entry in tst_speaker[speaker].items()]
+      tst_durations[speaker] = [entry.wav_duration for entry in tst_speaker[speaker].items()]
     if speaker in rst_speaker:
-      rst_durations[speaker] = [entry.duration_s for entry in rst_speaker[speaker].items()]
+      rst_durations[speaker] = [entry.wav_duration for entry in rst_speaker[speaker].items()]
     if speaker in tot_speaker:
-      tot_durations[speaker] = [entry.duration_s for entry in tot_speaker[speaker].items()]
+      tot_durations[speaker] = [entry.wav_duration for entry in tot_speaker[speaker].items()]
 
   meta_dataset = get_meta_dict(
     speakers=speaker_order,
