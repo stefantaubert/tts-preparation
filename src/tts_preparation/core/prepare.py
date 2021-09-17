@@ -156,7 +156,7 @@ def __add_symbols(speaker_available: PreparedDataList, speaker_existing: Prepare
   return cover_symbols_default(speaker_available_dict, cover_symbols)
 
 
-def add_random_seconds(existing_set: PreparedDataList, restset: PreparedDataList, symbols: SymbolIdDict, seed: int, seconds: float, respect_existing: bool) -> None:
+def add_random_seconds(existing_set: PreparedDataList, restset: PreparedDataList, seed: int, seconds: float, respect_existing: bool) -> None:
   return __add(
     existing_set=existing_set,
     restset=restset,
