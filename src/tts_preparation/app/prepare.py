@@ -45,7 +45,7 @@ def save_trainset(prep_dir: Path, dataset: PreparedDataList) -> None:
 
 
 def get_trainset_path(prep_dir: Path) -> Path:
-  path = prep_dir / "training.csv"
+  path = prep_dir / "training.pkl"
   return path
 
 
@@ -55,7 +55,7 @@ def load_trainset(prep_dir: Path) -> PreparedDataList:
 
 
 def get_testset_path(prep_dir: Path) -> Path:
-  path = prep_dir / "test.csv"
+  path = prep_dir / "test.pkl"
   return path
 
 
@@ -71,7 +71,7 @@ def load_testset(prep_dir: Path) -> PreparedDataList:
 
 
 def get_valset_path(prep_dir: Path) -> Path:
-  path = prep_dir / "validation.csv"
+  path = prep_dir / "validation.pkl"
   return path
 
 
@@ -87,7 +87,7 @@ def load_valset(prep_dir: Path) -> PreparedDataList:
 
 
 def get_restset_path(prep_dir: Path) -> Path:
-  path = prep_dir / "rest.csv"
+  path = prep_dir / "rest.pkl"
   return path
 
 
@@ -104,7 +104,7 @@ def load_restset(prep_dir: Path) -> PreparedDataList:
 
 
 def get_totalset_path(prep_dir: Path) -> Path:
-  path = prep_dir / "total.csv"
+  path = prep_dir / "total.pkl"
   return path
 
 
