@@ -60,6 +60,17 @@ def split_int_set_str(ints: Optional[str]) -> Optional[Set[int]]:
   return ints_set
 
 
+def split_str_set_symbols(string_input: Optional[str]) -> Optional[Set[Symbol]]:
+  """ tuple_list: "a b c" """
+  if string_input is None:
+    return None
+  if len(string_input) == 0:
+    return set()
+  symbols_list = string_input.split(" ")
+  symbols_set = set(symbols_list)
+  return symbols_set
+
+
 def get_value_in_type(old_value: _T, new_value: str) -> _T:
   old_type = type(old_value)
   new_value_with_original_type = old_type(new_value)

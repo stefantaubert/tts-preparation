@@ -7,12 +7,11 @@ from typing import Optional
 
 from accent_analyser.core.word_probabilities import (ProbabilitiesDict,
                                                      replace_with_prob)
-from sentence2pronunciation import clear_cache, sentence2pronunciation_cached
-from sentence2pronunciation.core import sentence2pronunciation
+from sentence2pronunciation import sentence2pronunciation
 from text_utils import (EngToIPAMode, Language, Symbol, SymbolFormat,
-                        SymbolIdDict, SymbolIds, Symbols, SymbolsMap,
-                        break_n_thongs, remove_arcs, remove_stress,
-                        remove_tones, symbols_to_ipa, text_normalize,
+                        SymbolIdDict, SymbolIds, Symbols, SymbolsMap)
+from text_utils import change_ipa as change_ipa_method
+from text_utils import (clear_ipa_cache, symbols_to_ipa, text_normalize,
                         text_to_sentences, text_to_symbols)
 from tts_preparation.utils import GenericList, console_out_len
 
@@ -140,25 +139,20 @@ def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: S
     utterance.symbols = new_symbols
     utterance.symbols_format = new_format
     utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
-  # TODO use text-utils method for clear
-  clear_cache()
+
+  clear_ipa_cache()
 
 
-def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_all_n_thongs: bool) -> None:
+def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool, remove_space_around_punctuation: bool) -> None:
   for utterance in utterances.items():
-    new_symbols = utterance.symbols
-
-    if ignore_arcs:
-      new_symbols = remove_arcs(new_symbols)
-
-    if ignore_tones:
-      new_symbols = remove_tones(new_symbols)
-
-    if ignore_stress:
-      new_symbols = remove_stress(new_symbols)
-
-    if break_all_n_thongs:
-      new_symbols = break_n_thongs(new_symbols)
+    new_symbols = change_ipa_method(
+      symbols=utterance.symbols,
+      ignore_tones=ignore_tones,
+      ignore_arcs=ignore_arcs,
+      ignore_stress=ignore_stress,
+      break_n_thongs=break_n_thongs,
+      remove_space_around_punctuation=remove_space_around_punctuation,
+    )
 
     utterance.symbols = new_symbols
     utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)

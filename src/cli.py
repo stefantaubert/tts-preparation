@@ -22,7 +22,7 @@ from tts_preparation.app import (add_text, app_add_greedy_kld_ngram_minutes,
                                  merge_ds, normalize_text,
                                  print_and_save_stats, split_text)
 from tts_preparation.core import DatasetType
-from tts_preparation.utils import parse_tuple_list, split_int_set_str
+from tts_preparation.utils import parse_tuple_list, split_str_set_symbols
 
 BASE_DIR_VAR = "base_dir"
 
@@ -58,13 +58,13 @@ def merge_ds_cli(**args) -> None:
 def init_merge_ds_filter_symbols_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--orig_merge_name', type=str, required=True)
   parser.add_argument('--dest_merge_name', type=str, required=True)
-  parser.add_argument('--allowed_symbol_ids', type=str, required=True)
+  parser.add_argument('--allowed_symbols', type=str, required=True)
   parser.set_defaults(overwrite=True)
   return ds_filter_symbols_cli
 
 
 def ds_filter_symbols_cli(**args) -> None:
-  args["allowed_symbol_ids"] = split_int_set_str(args["allowed_symbol_ids"])
+  args["allowed_symbols"] = split_str_set_symbols(args["allowed_symbols"])
   ds_filter_symbols(**args)
 
 
@@ -147,14 +147,14 @@ def init_prepare_ds_add_ngram_cover_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
   parser.add_argument('--n_gram', type=int, required=True)
-  parser.add_argument('--ignore_symbol_ids', type=str)
+  parser.add_argument('--ignore_symbols', type=str)
   parser.add_argument('--top_percent', type=float)
   parser.set_defaults(overwrite=True)
   return app_add_ngram_cover_cli
 
 
 def app_add_ngram_cover_cli(**args) -> None:
-  args["ignore_symbol_ids"] = split_int_set_str(args["ignore_symbol_ids"])
+  args["ignore_symbols"] = split_str_set_symbols(args["ignore_symbols"])
   app_add_ngram_cover(**args)
 
 
@@ -165,7 +165,7 @@ def init_prepare_ds_add_random_ngram_cover_minutes_parser(parser: ArgumentParser
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
   parser.add_argument('--n_gram', type=int, required=True)
-  parser.add_argument('--ignore_symbol_ids', type=str)
+  parser.add_argument('--ignore_symbols', type=str)
   parser.add_argument('--seed', type=int, required=True)
   parser.add_argument('--minutes', type=float, required=True)
   parser.set_defaults(overwrite=True)
@@ -173,7 +173,7 @@ def init_prepare_ds_add_random_ngram_cover_minutes_parser(parser: ArgumentParser
 
 
 def app_add_random_ngram_cover_minutes_cli(**args) -> None:
-  args["ignore_symbol_ids"] = split_int_set_str(args["ignore_symbol_ids"])
+  args["ignore_symbols"] = split_str_set_symbols(args["ignore_symbols"])
   app_add_random_ngram_cover_minutes(**args)
 
 
@@ -184,14 +184,14 @@ def init_prepare_ds_add_ngrams_kld_minutes_parser(parser: ArgumentParser) -> Non
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
   parser.add_argument('--n_gram', type=int, required=True)
-  parser.add_argument('--ignore_symbol_ids', type=str)
+  parser.add_argument('--ignore_symbols', type=str)
   parser.add_argument('--minutes', type=float, required=True)
   parser.set_defaults(overwrite=True)
   return app_add_ngram_greedy_kld_minutes_cli
 
 
 def app_add_ngram_greedy_kld_minutes_cli(**args) -> None:
-  args["ignore_symbol_ids"] = split_int_set_str(args["ignore_symbol_ids"])
+  args["ignore_symbols"] = split_str_set_symbols(args["ignore_symbols"])
   app_add_greedy_kld_ngram_minutes(**args)
 
 
@@ -199,7 +199,7 @@ def init_prepare_ds_add_symbols_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--orig_prep_name', type=str, required=True)
   parser.add_argument('--dest_prep_name', type=str, required=True)
-  parser.add_argument('--cover_symbol_ids', type=str)
+  parser.add_argument('--cover_symbols', type=str)
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
   parser.set_defaults(overwrite=True)
@@ -207,7 +207,7 @@ def init_prepare_ds_add_symbols_parser(parser: ArgumentParser) -> None:
 
 
 def app_add_symbols_cli(**args) -> None:
-  args["cover_symbol_ids"] = split_int_set_str(args["cover_symbol_ids"])
+  args["cover_symbols"] = split_str_set_symbols(args["cover_symbols"])
   app_add_symbols(**args)
 
 
@@ -219,13 +219,13 @@ def init_prepare_ds_add_ngram_epochs_parser(parser: ArgumentParser) -> None:
                       type=DatasetType.__getitem__)
   parser.add_argument('--n_gram', type=int, required=True)
   parser.add_argument('--epochs', type=int, required=True)
-  parser.add_argument('--ignore_symbol_ids', type=str)
+  parser.add_argument('--ignore_symbols', type=str)
   parser.set_defaults(overwrite=True)
   return app_add_greedy_ngram_epochs_cli
 
 
 def app_add_greedy_ngram_epochs_cli(**args) -> None:
-  args["ignore_symbol_ids"] = split_int_set_str(args["ignore_symbol_ids"])
+  args["ignore_symbols"] = split_str_set_symbols(args["ignore_symbols"])
   app_add_greedy_ngram_epochs(**args)
 
 
@@ -236,14 +236,14 @@ def init_prepare_ds_add_ngram_minute_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
   parser.add_argument('--n_gram', type=int, required=True)
-  parser.add_argument('--ignore_symbol_ids', type=str)
+  parser.add_argument('--ignore_symbols', type=str)
   parser.add_argument('--minutes', type=float, required=True)
   parser.set_defaults(overwrite=True)
   return app_add_greedy_ngram_minutes_cli
 
 
 def app_add_greedy_ngram_minutes_cli(**args) -> None:
-  args["ignore_symbol_ids"] = split_int_set_str(args["ignore_symbol_ids"])
+  args["ignore_symbols"] = split_str_set_symbols(args["ignore_symbols"])
   app_add_greedy_ngram_minutes(**args)
 
 
@@ -310,7 +310,8 @@ def init_change_ipa_text_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--ignore_tones', action='store_true')
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--ignore_stress', action='store_true')
-  parser.add_argument('--break_all_n_thongs', action='store_true')
+  parser.add_argument('--break_n_thongs', action='store_true')
+  parser.add_argument('--remove_space_around_punctuation', action='store_true')
   return change_ipa_text
 
 
