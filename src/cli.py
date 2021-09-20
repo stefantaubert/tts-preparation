@@ -45,13 +45,13 @@ def init_merge_ds_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--sdp_dir', type=Path, required=True)
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--ds_speakers', type=str, required=True)
-  parser.add_argument('--ds_text_audio', type=str, required=True)
+  parser.add_argument('--ds_final_name', type=str, required=True)
   return merge_ds_cli
 
 
 def merge_ds_cli(**args) -> None:
   args["ds_speakers"] = parse_tuple_list(args["ds_speakers"])
-  args["ds_text_audio"] = parse_tuple_list(args["ds_text_audio"])
+  args["ds_final_name"] = parse_tuple_list(args["ds_text_audio"])
   merge_ds(**args)
 
 

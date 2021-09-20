@@ -3,8 +3,8 @@ from logging import getLogger
 from pathlib import Path
 from typing import List, Set, Tuple
 
-from speech_dataset_preprocessing import get_final_ds
-from speech_dataset_preprocessing.core.final import FinalDsEntryList
+from speech_dataset_preprocessing import load_final_ds
+from speech_dataset_preprocessing import FinalDsEntryList
 from text_utils import SpeakersDict
 from text_utils.types import Speaker, Symbol
 from tts_preparation.app.io import (get_merged_dir,
@@ -38,7 +38,7 @@ def save_merged_speakers_json(merge_dir: Path, speakers: SpeakersDict) -> None:
   speakers.save(path)
 
 
-def merge_ds(base_dir: Path, sdp_dir: Path, merge_name: str, ds_speakers: List[Tuple[DsName, Speaker]], ds_text_audio: List[Tuple[DsName, str, str]], overwrite: bool = True) -> None:
+def merge_ds(base_dir: Path, sdp_dir: Path, merge_name: str, ds_speakers: List[Tuple[DsName, Speaker]], ds_final_name: List[Tuple[DsName, str]], overwrite: bool = True) -> None:
   logger = getLogger(__name__)
   logger.info(f"Merging dataset: {merge_name}...")
   dest_merge_dir = get_merged_dir(base_dir, merge_name)
@@ -48,12 +48,11 @@ def merge_ds(base_dir: Path, sdp_dir: Path, merge_name: str, ds_speakers: List[T
     return
 
   datasets: List[Tuple[DsName, FinalDsEntryList]] = []
-  for ds_name, text_name, audio_name in set(ds_text_audio):
-    final_data_list = get_final_ds(
+  for ds_name, final_name in set(ds_final_name):
+    final_data_list = load_final_ds(
       base_dir=sdp_dir,
       ds_name=ds_name,
-      text_name=text_name,
-      wav_name=audio_name,
+      final_name=final_name,
     )
 
     datasets.append((ds_name, final_data_list))
