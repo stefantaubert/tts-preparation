@@ -51,7 +51,7 @@ def init_merge_ds_parser(parser: ArgumentParser) -> None:
 
 def merge_ds_cli(**args) -> None:
   args["ds_speakers"] = parse_tuple_list(args["ds_speakers"])
-  args["ds_final_name"] = parse_tuple_list(args["ds_text_audio"])
+  args["ds_final_name"] = parse_tuple_list(args["ds_final_name"])
   merge_ds(**args)
 
 
