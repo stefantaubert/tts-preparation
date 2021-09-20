@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from accent_analyser import load_probabilities
+from general_utils import get_subfolder_names, load_obj, save_obj
 from text_utils import EngToIPAMode, Language, Symbol, SymbolFormat, SymbolsMap
 from tts_preparation.app.io import (get_infer_map_path, get_merged_dir,
                                     infer_map_exists)
@@ -17,23 +18,21 @@ from tts_preparation.core.inference import (InferableUtterances,
                                             utterances_normalize,
                                             utterances_split)
 from tts_preparation.globals import NOT_INFERABLE_SYMBOL_MARKER
-from tts_preparation.utils import (get_subdir, get_subfolder_names, load_obj,
-                                   read_text, save_obj)
 
 UTTERANCES_PKL = "utterances.pkl"
 UTTERANCES_TXT = "utterances.txt"
 
 
-def _get_inference_text_root_dir(merged_dir: Path, create: bool = False) -> Path:
-  return get_subdir(merged_dir, 'inference', create)
+def __get_inference_text_root_dir(merged_dir: Path) -> Path:
+  return merged_dir / 'inference'
 
 
-def get_text_dir(merge_dir: Path, text_name: str, create: bool) -> Path:
-  return get_subdir(_get_inference_text_root_dir(merge_dir, create=create), text_name, create)
+def get_text_dir(merge_dir: Path, text_name: str) -> Path:
+  return __get_inference_text_root_dir(merge_dir) / text_name
 
 
 def get_available_texts(merge_dir: Path) -> List[str]:
-  root_folder = _get_inference_text_root_dir(merge_dir, create=False)
+  root_folder = __get_inference_text_root_dir(merge_dir)
   all_text_names = get_subfolder_names(root_folder)
   return all_text_names
 
@@ -42,7 +41,7 @@ def get_all_symbols(merge_dir: Path) -> Set[Symbol]:
   all_text_names = get_available_texts(merge_dir)
   all_symbols: Set[Symbol] = set()
   for text_name in all_text_names:
-    text_dir = get_text_dir(merge_dir, text_name, create=False)
+    text_dir = get_text_dir(merge_dir, text_name)
     utterances = load_utterances(text_dir)
     utterances_symbols = {symbol for utterance in utterances.items()
                           for symbol in utterance.symbols}
@@ -70,7 +69,7 @@ def __save_utterances_txt(text_dir: Path, utterances: InferableUtterances) -> No
 def add_text(base_dir: Path, merge_name: str, text_name: str, text_filepath: Optional[Path], language: Language, text: Optional[str], text_format: SymbolFormat) -> None:
   assert text_name is not None and text_name != ""
   logger = getLogger(__name__)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
   if not merge_dir.is_dir():
     logger.error("Please prepare data first.")
     return
@@ -81,7 +80,7 @@ def add_text(base_dir: Path, merge_name: str, text_name: str, text_filepath: Opt
     logger.error("Text and Text path could not be both empty!")
     return
   if text_filepath is not None:
-    text_input = read_text(text_filepath)
+    text_input = text_filepath.read_text()
   else:
     text_input = text
 
@@ -92,7 +91,8 @@ def add_text(base_dir: Path, merge_name: str, text_name: str, text_filepath: Opt
     symbol_id_dict=load_merged_symbol_converter(merge_dir),
   )
 
-  text_dir = get_text_dir(merge_dir, text_name, create=True)
+  text_dir = get_text_dir(merge_dir, text_name)
+  text_dir.mkdir(parents=True, exist_ok=True)
   __save_utterances(text_dir, utterances)
   __save_utterances_txt(text_dir, utterances)
 
@@ -102,8 +102,8 @@ def add_text(base_dir: Path, merge_name: str, text_name: str, text_filepath: Opt
 
 def split_text(base_dir: Path, merge_name: str, text_name: str) -> None:
   logger = getLogger(__name__)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  text_dir = get_text_dir(merge_dir, text_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  text_dir = get_text_dir(merge_dir, text_name)
   if not text_dir.is_dir():
     logger.error("Please add text first.")
     return
@@ -114,7 +114,8 @@ def split_text(base_dir: Path, merge_name: str, text_name: str) -> None:
     symbol_id_dict=load_merged_symbol_converter(merge_dir),
   )
 
-  text_dir = get_text_dir(merge_dir, text_name, create=True)
+  text_dir = get_text_dir(merge_dir, text_name)
+  text_dir.mkdir(parents=True, exist_ok=True)
   __save_utterances(text_dir, utterances)
   __save_utterances_txt(text_dir, utterances)
 
@@ -124,8 +125,8 @@ def split_text(base_dir: Path, merge_name: str, text_name: str) -> None:
 
 def normalize_text(base_dir: Path, merge_name: str, text_name: str) -> None:
   logger = getLogger(__name__)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  text_dir = get_text_dir(merge_dir, text_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  text_dir = get_text_dir(merge_dir, text_name)
   if not text_dir.is_dir():
     logger.error("Please add text first.")
     return
@@ -137,7 +138,8 @@ def normalize_text(base_dir: Path, merge_name: str, text_name: str) -> None:
     symbol_id_dict=load_merged_symbol_converter(merge_dir),
   )
 
-  text_dir = get_text_dir(merge_dir, text_name, create=True)
+  text_dir = get_text_dir(merge_dir, text_name)
+  text_dir.mkdir(parents=True, exist_ok=True)
   __save_utterances(text_dir, utterances)
   __save_utterances_txt(text_dir, utterances)
 
@@ -147,8 +149,8 @@ def normalize_text(base_dir: Path, merge_name: str, text_name: str) -> None:
 
 def ipa_convert_text(base_dir: Path, merge_name: str, text_name: str, consider_ipa_annotations: bool = False, mode: Optional[EngToIPAMode] = None) -> None:
   logger = getLogger(__name__)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  text_dir = get_text_dir(merge_dir, text_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  text_dir = get_text_dir(merge_dir, text_name)
   if not text_dir.is_dir():
     logger.error("Please add text first.")
     return
@@ -162,7 +164,8 @@ def ipa_convert_text(base_dir: Path, merge_name: str, text_name: str, consider_i
     mode=mode,
   )
 
-  text_dir = get_text_dir(merge_dir, text_name, create=True)
+  text_dir = get_text_dir(merge_dir, text_name)
+  text_dir.mkdir(parents=True, exist_ok=True)
   __save_utterances(text_dir, utterances)
   __save_utterances_txt(text_dir, utterances)
 
@@ -172,8 +175,8 @@ def ipa_convert_text(base_dir: Path, merge_name: str, text_name: str, consider_i
 
 def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool, remove_space_around_punctuation: bool) -> None:
   logger = getLogger(__name__)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  text_dir = get_text_dir(merge_dir, text_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  text_dir = get_text_dir(merge_dir, text_name)
   if not text_dir.is_dir():
     logger.error("Please add text first.")
     return
@@ -190,7 +193,8 @@ def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tone
     remove_space_around_punctuation=remove_space_around_punctuation,
   )
 
-  text_dir = get_text_dir(merge_dir, text_name, create=True)
+  text_dir = get_text_dir(merge_dir, text_name)
+  text_dir.mkdir(parents=True, exist_ok=True)
   __save_utterances(text_dir, utterances)
   __save_utterances_txt(text_dir, utterances)
 
@@ -200,8 +204,8 @@ def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tone
 
 def apply_mapping_table(base_dir: Path, merge_name: str, text_name: str, mapping_table_path: Path, seed: int) -> None:
   logger = getLogger(__name__)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  text_dir = get_text_dir(merge_dir, text_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  text_dir = get_text_dir(merge_dir, text_name)
   if not text_dir.is_dir():
     logger.error("Please add text first.")
     return
@@ -221,7 +225,8 @@ def apply_mapping_table(base_dir: Path, merge_name: str, text_name: str, mapping
     seed=seed,
   )
 
-  text_dir = get_text_dir(merge_dir, text_name, create=True)
+  text_dir = get_text_dir(merge_dir, text_name)
+  text_dir.mkdir(parents=True, exist_ok=True)
   __save_utterances(text_dir, utterances)
   __save_utterances_txt(text_dir, utterances)
 
@@ -231,8 +236,8 @@ def apply_mapping_table(base_dir: Path, merge_name: str, text_name: str, mapping
 
 def map_text(base_dir: Path, merge_name: str, text_name: str, symbols_map_path: Optional[Path] = None) -> None:
   logger = getLogger(__name__)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  text_dir = get_text_dir(merge_dir, text_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  text_dir = get_text_dir(merge_dir, text_name)
   if not text_dir.is_dir():
     logger.error("Please add text first.")
     return
@@ -251,7 +256,8 @@ def map_text(base_dir: Path, merge_name: str, text_name: str, symbols_map_path: 
     symbols_map=SymbolsMap.load(symbols_map_path),
   )
 
-  text_dir = get_text_dir(merge_dir, text_name, create=True)
+  text_dir = get_text_dir(merge_dir, text_name)
+  text_dir.mkdir(parents=True, exist_ok=True)
   __save_utterances(text_dir, utterances)
   __save_utterances_txt(text_dir, utterances)
 

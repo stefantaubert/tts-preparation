@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from text_utils import SymbolIdDict
-from tts_preparation.utils import get_subdir
 
 INFER_MAP_FN = "inference_map.json"
 
@@ -19,8 +18,8 @@ def infer_map_exists(merge_dir: Path) -> bool:
 _merge_symbols_json = "symbols.json"
 
 
-def get_merged_dir(base_dir: Path, merge_name: str, create: bool = False) -> Path:
-  return get_subdir(base_dir, merge_name, create)
+def get_merged_dir(base_dir: Path, merge_name: str) -> Path:
+  return base_dir / merge_name
 
 
 def load_merged_symbol_converter(merge_dir: Path) -> SymbolIdDict:

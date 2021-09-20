@@ -14,7 +14,7 @@
 # from text_utils.types import Speaker, Speakers
 # from tts_preparation.globals import (DEFAULT_PADDING_ACCENT,
 #                                      DEFAULT_PADDING_SYMBOL)
-# from tts_preparation.utils import (GenericList, contains_only_allowed_symbols,
+# from general_utils import (GenericList, contains_only_allowed_symbols,
 #                                    get_counter)
 
 # ALL_SPEAKERS_INDICATOR = "all"

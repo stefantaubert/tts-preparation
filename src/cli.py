@@ -2,8 +2,8 @@ import os
 from argparse import ArgumentParser
 from pathlib import Path
 
-from text_utils import EngToIPAMode, Language
-from text_utils.symbol_format import SymbolFormat
+from general_utils import parse_tuple_list, split_str_set_symbols
+from text_utils import EngToIPAMode, Language, SymbolFormat
 
 from tts_preparation.app import (add_text, app_add_greedy_kld_ngram_minutes,
                                  app_add_greedy_ngram_epochs,
@@ -22,7 +22,6 @@ from tts_preparation.app import (add_text, app_add_greedy_kld_ngram_minutes,
                                  merge_ds, normalize_text,
                                  print_and_save_stats, split_text)
 from tts_preparation.core import DatasetType
-from tts_preparation.utils import parse_tuple_list, split_str_set_symbols
 
 BASE_DIR_VAR = "base_dir"
 

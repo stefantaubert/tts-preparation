@@ -13,7 +13,7 @@ from text_utils import (EngToIPAMode, Language, Symbol, SymbolFormat,
 from text_utils import change_ipa as change_ipa_method
 from text_utils import (clear_ipa_cache, symbols_to_ipa, text_normalize,
                         text_to_sentences, text_to_symbols)
-from tts_preparation.utils import GenericList, console_out_len
+from general_utils import GenericList, console_out_len
 
 
 @dataclass

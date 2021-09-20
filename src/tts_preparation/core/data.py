@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, Set
 
+from general_utils import GenericList
 from text_utils.gender import Gender
 from text_utils.language import Language
 from text_utils.symbol_format import SymbolFormat
 from text_utils.types import Speaker, SpeakerId, SymbolIds, Symbols
-from tts_preparation.utils import GenericList
 
 EntryId = int
 

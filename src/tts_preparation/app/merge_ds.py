@@ -12,7 +12,7 @@ from tts_preparation.app.io import (get_merged_dir,
                                     save_merged_symbol_converter)
 from tts_preparation.core.merge_ds import (DsName, PreparedDataList, merge,
                                            remove_unwanted_symbols)
-from tts_preparation.utils import load_obj, save_obj
+from general_utils import load_obj, save_obj
 
 _merge_data_csv = "data.pkl"
 _merge_speakers_json = "speakers.json"

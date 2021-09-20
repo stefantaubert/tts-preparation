@@ -5,6 +5,7 @@ from statistics import mean
 from typing import Callable, Optional, Set, Tuple
 
 import pandas as pd
+from general_utils import load_obj, save_obj
 from text_selection import get_common_durations
 from text_utils import SymbolIdDict
 from text_utils.types import Symbol
@@ -27,15 +28,14 @@ from tts_preparation.core.stats_speaker import (get_speaker_stats,
                                                 log_general_stats)
 from tts_preparation.core.stats_symbols import get_ngram_stats_df
 from tts_preparation.globals import DEFAULT_CSV_SEPERATOR
-from tts_preparation.utils import get_subdir, load_obj, save_obj
 
 
-def _get_prep_root_dir(merged_dir: Path, create: bool = False) -> Path:
-  return get_subdir(merged_dir, 'training', create)
+def __get_prep_root_dir(merged_dir: Path) -> Path:
+  return merged_dir / 'training'
 
 
-def get_prep_dir(merged_dir: Path, prep_name: str, create: bool = False) -> Path:
-  return get_subdir(_get_prep_root_dir(merged_dir, create=create), prep_name, create)
+def get_prep_dir(merged_dir: Path, prep_name: str) -> Path:
+  return __get_prep_root_dir(merged_dir) / prep_name
 
 
 def save_trainset(prep_dir: Path, dataset: PreparedDataList) -> None:
@@ -162,9 +162,9 @@ def print_and_save_stats(base_dir: Path, merge_name: str, prep_name: str) -> Non
   logger = getLogger(__name__)
   _print_quick_stats(base_dir, merge_name, prep_name)
 
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
   merge_data = load_merged_data(merge_dir)
-  prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
+  prep_dir = get_prep_dir(merge_dir, prep_name)
   trainset = load_trainset(prep_dir) if get_trainset_path(
     prep_dir).is_file() else PreparedDataList()
   testset = load_testset(prep_dir) if get_testset_path(prep_dir).is_file() else PreparedDataList()
@@ -226,9 +226,9 @@ def print_and_save_stats(base_dir: Path, merge_name: str, prep_name: str) -> Non
 
 
 def process_stats(base_dir: Path, merge_name: str, prep_name: str, ds: DatasetType) -> None:
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
   #merge_data = load_merged_data(merge_dir)
-  prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
+  prep_dir = get_prep_dir(merge_dir, prep_name)
   onegram_stats = _load_onegram_stats(prep_dir)
   twogram_stats = _load_twogram_stats(prep_dir)
   threegram_stats = _load_threegram_stats(prep_dir)
@@ -242,9 +242,9 @@ def process_stats(base_dir: Path, merge_name: str, prep_name: str, ds: DatasetTy
 
 
 def _print_quick_stats(base_dir: Path, merge_name: str, prep_name: str) -> None:
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
   merge_data = load_merged_data(merge_dir)
-  prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
+  prep_dir = get_prep_dir(merge_dir, prep_name)
 
   trainset = load_trainset(prep_dir) if get_trainset_path(
     prep_dir).is_file() else PreparedDataList()
@@ -263,8 +263,8 @@ def _print_quick_stats(base_dir: Path, merge_name: str, prep_name: str) -> None:
 
 def app_prepare(base_dir: Path, merge_name: str, prep_name: str, overwrite: bool = True) -> None:
   logger = getLogger(__name__)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  prep_dir = get_prep_dir(merge_dir, prep_name)
   if prep_dir.is_dir():
     if overwrite:
       logger.info("Removing existing...")
@@ -415,9 +415,9 @@ def app_add_greedy_ngram_minutes(base_dir: Path, merge_name: str, orig_prep_name
 def app_add_n_diverse_random_minutes(base_dir: Path, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, overwrite: bool, seed: int, minutes: float, n: int) -> None:
   logger = getLogger(__name__)
   logger.info(f"Adding utterances speaker-wise to {str(dataset)}...")
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
 
-  orig_prep_dir = get_prep_dir(merge_dir, orig_prep_name, create=False)
+  orig_prep_dir = get_prep_dir(merge_dir, orig_prep_name)
 
   new_datasets = add_n_divergent_random_seconds(
     existing_set=load_set(orig_prep_dir, dataset),
@@ -431,7 +431,7 @@ def app_add_n_diverse_random_minutes(base_dir: Path, merge_name: str, orig_prep_
   for i, (new_set, new_restset) in enumerate(new_datasets):
     logger.info(f"Saving {i+1}/{len(new_datasets)}...")
     dest_name = f"{dest_prep_name}_{i+1}"
-    dest_prep_dir = get_prep_dir(merge_dir, dest_name, create=False)
+    dest_prep_dir = get_prep_dir(merge_dir, dest_name)
     if not overwrite and dest_prep_dir.is_dir():
       logger.info(f"{dest_name} already exists. Skipping...")
       continue
@@ -444,7 +444,7 @@ def app_add_n_diverse_random_minutes(base_dir: Path, merge_name: str, orig_prep_
 
   new_sets = [
    {x.entry_id for x in load_trainset(
-    get_prep_dir(merge_dir, dest_name, create=False)).items()}
+    get_prep_dir(merge_dir, dest_name)).items()}
       for dest_name in dest_names
   ]
 
@@ -503,11 +503,11 @@ def app_add_greedy_kld_ngram_minutes(base_dir: Path, merge_name: str, orig_prep_
 def __add(base_dir: Path, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, overwrite: bool, func: Callable[[PreparedDataList, PreparedDataList, SymbolIdDict], Tuple[PreparedDataList, PreparedDataList]], **kwargs) -> None:
   logger = getLogger(__name__)
   logger.info(f"Adding utterances speaker-wise to {str(dataset)}...")
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  dest_prep_dir = get_prep_dir(merge_dir, dest_prep_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  dest_prep_dir = get_prep_dir(merge_dir, dest_prep_name)
   if not overwrite and dest_prep_dir.is_dir():
     logger.info("Already exists.")
-  orig_prep_dir = get_prep_dir(merge_dir, orig_prep_name, create=False)
+  orig_prep_dir = get_prep_dir(merge_dir, orig_prep_name)
 
   new_set, new_restset = func(
     existing_set=load_set(orig_prep_dir, dataset),
@@ -524,8 +524,8 @@ def __add(base_dir: Path, merge_name: str, orig_prep_name: str, dest_prep_name: 
 
 def app_get_random_seconds_divergent_seeds(base_dir: Path, merge_name: str, prep_name: str, minutes: float, seed: int, n: int) -> None:
   logger = getLogger(__name__)
-  merge_dir = get_merged_dir(base_dir, merge_name, create=False)
-  orig_prep_dir = get_prep_dir(merge_dir, prep_name, create=False)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  orig_prep_dir = get_prep_dir(merge_dir, prep_name)
   rest_set = load_restset(orig_prep_dir)
 
   selected_seeds = get_random_seconds_divergent_seeds(
