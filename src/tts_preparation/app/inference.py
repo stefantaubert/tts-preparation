@@ -14,6 +14,7 @@ from tts_preparation.core.inference import (InferableUtterances,
                                             utterances_apply_mapping_table,
                                             utterances_apply_symbols_map,
                                             utterances_change_ipa,
+                                            utterances_change_text,
                                             utterances_convert_to_ipa,
                                             utterances_normalize,
                                             utterances_split)
@@ -33,6 +34,8 @@ def get_text_dir(merge_dir: Path, text_name: str) -> Path:
 
 def get_available_texts(merge_dir: Path) -> List[str]:
   root_folder = __get_inference_text_root_dir(merge_dir)
+  if not root_folder.exists():
+    return []
   all_text_names = get_subfolder_names(root_folder)
   return all_text_names
 
@@ -173,7 +176,7 @@ def ipa_convert_text(base_dir: Path, merge_name: str, text_name: str, consider_i
   __check_for_unknown_symbols(utterances)
 
 
-def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool, remove_space_around_punctuation: bool) -> None:
+def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool) -> None:
   logger = getLogger(__name__)
   merge_dir = get_merged_dir(base_dir, merge_name)
   text_dir = get_text_dir(merge_dir, text_name)
@@ -190,6 +193,30 @@ def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tone
     ignore_stress=ignore_stress,
     ignore_tones=ignore_tones,
     break_n_thongs=break_n_thongs,
+  )
+
+  text_dir = get_text_dir(merge_dir, text_name)
+  text_dir.mkdir(parents=True, exist_ok=True)
+  __save_utterances(text_dir, utterances)
+  __save_utterances_txt(text_dir, utterances)
+
+  log_utterances(utterances, marker=NOT_INFERABLE_SYMBOL_MARKER)
+  __check_for_unknown_symbols(utterances)
+
+
+def change_text(base_dir: Path, merge_name: str, text_name: str, remove_space_around_punctuation: bool) -> None:
+  logger = getLogger(__name__)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  text_dir = get_text_dir(merge_dir, text_name)
+  if not text_dir.is_dir():
+    logger.error("Please add text first.")
+    return
+
+  logger.info("Changing content...")
+  utterances = load_utterances(text_dir)
+  utterances_change_text(
+    utterances=utterances,
+    symbol_id_dict=load_merged_symbol_converter(merge_dir),
     remove_space_around_punctuation=remove_space_around_punctuation,
   )
 

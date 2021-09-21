@@ -98,8 +98,8 @@ class DatasetType(IntEnum):
 #   ds_entry_id: int
 #   text_original: str
 #   text: str
-#   wav_path: str
-#   mel_path: str
+#   wav_path: Path
+#   mel_path: Path
 #   serialized_symbol_ids: str
 #   serialized_accent_ids: str
 #   duration_s: float

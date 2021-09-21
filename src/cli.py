@@ -310,6 +310,12 @@ def init_change_ipa_text_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--ignore_stress', action='store_true')
   parser.add_argument('--break_n_thongs', action='store_true')
+  return change_ipa_text
+
+
+def init_change_text_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
   parser.add_argument('--remove_space_around_punctuation', action='store_true')
   return change_ipa_text
 
@@ -363,6 +369,7 @@ def _init_parser():
   _add_parser_to(subparsers, "inference-text-add", init_add_text_parser)
   _add_parser_to(subparsers, "inference-text-split", init_split_text_parser)
   _add_parser_to(subparsers, "inference-text-normalize", init_normalize_text_parser)
+  _add_parser_to(subparsers, "inference-text-change-text", init_change_text_parser)
   _add_parser_to(subparsers, "inference-text-to-ipa", init_convert_to_ipa_text_parser)
   _add_parser_to(subparsers, "inference-text-change-ipa", init_change_ipa_text_parser)
   _add_parser_to(subparsers, "inference-text-map", init_map_text_parser)

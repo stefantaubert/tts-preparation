@@ -7,13 +7,14 @@ from typing import Optional
 
 from accent_analyser.core.word_probabilities import (ProbabilitiesDict,
                                                      replace_with_prob)
+from general_utils import GenericList, console_out_len
 from sentence2pronunciation import sentence2pronunciation
 from text_utils import (EngToIPAMode, Language, Symbol, SymbolFormat,
                         SymbolIdDict, SymbolIds, Symbols, SymbolsMap)
 from text_utils import change_ipa as change_ipa_method
-from text_utils import (clear_ipa_cache, symbols_to_ipa, text_normalize,
-                        text_to_sentences, text_to_symbols)
-from general_utils import GenericList, console_out_len
+from text_utils import (clear_ipa_cache, symbols_to_ipa, symbols_to_sentences,
+                        text_normalize, text_to_symbols)
+from text_utils.text import change_symbols
 
 
 @dataclass
@@ -88,20 +89,19 @@ def utterances_split(utterances: InferableUtterances, symbol_id_dict: SymbolIdDi
   new_utterances = InferableUtterances()
   counter = 1
   for utterance in utterances.items():
-    text_sentences = text_to_sentences(
-      text=''.join(utterance.symbols),
-      text_format=utterance.symbols_format,
+    sentences = symbols_to_sentences(
+      symbols=utterance.symbols,
+      symbols_format=utterance.symbols_format,
       lang=utterance.language,
     )
 
-    for text_sentence in text_sentences:
-      symbols = text_to_symbols(text_sentence, utterance.symbols_format, utterance.language)
+    for sentence_symbols in sentences:
       utterance = InferableUtterance(
         utterance_id=counter,
         language=utterance.language,
-        symbols=symbols,
+        symbols=sentence_symbols,
         symbols_format=utterance.symbols_format,
-        symbol_ids=symbol_id_dict.get_ids(symbols),
+        symbol_ids=symbol_id_dict.get_ids(sentence_symbols),
       )
       new_utterances.append(utterance)
       counter += 1
@@ -143,7 +143,7 @@ def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: S
   clear_ipa_cache()
 
 
-def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool, remove_space_around_punctuation: bool) -> None:
+def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool) -> None:
   for utterance in utterances.items():
     new_symbols = change_ipa_method(
       symbols=utterance.symbols,
@@ -151,7 +151,18 @@ def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: Symbo
       ignore_arcs=ignore_arcs,
       ignore_stress=ignore_stress,
       break_n_thongs=break_n_thongs,
+    )
+
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
+
+
+def utterances_change_text(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, remove_space_around_punctuation: bool) -> None:
+  for utterance in utterances.items():
+    new_symbols = change_symbols(
+      symbols=utterance.symbols,
       remove_space_around_punctuation=remove_space_around_punctuation,
+      lang=utterance.language,
     )
 
     utterance.symbols = new_symbols
