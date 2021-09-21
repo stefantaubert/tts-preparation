@@ -21,6 +21,7 @@ from tts_preparation.app import (add_text, app_add_greedy_kld_ngram_minutes,
                                  ds_filter_symbols, ipa_convert_text, map_text,
                                  merge_ds, normalize_text,
                                  print_and_save_stats, split_text)
+from tts_preparation.app.inference import change_text
 from tts_preparation.core import DatasetType
 
 BASE_DIR_VAR = "base_dir"
@@ -317,7 +318,7 @@ def init_change_text_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--text_name', type=str, required=True)
   parser.add_argument('--remove_space_around_punctuation', action='store_true')
-  return change_ipa_text
+  return change_text
 
 
 def init_apply_mapping_table_parser(parser: ArgumentParser) -> None:
