@@ -126,14 +126,14 @@ def utterances_normalize(utterances: InferableUtterances, symbol_id_dict: Symbol
     utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
 
 
-def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, mode: Optional[EngToIPAMode], consider_ipa_annotations: Optional[bool]) -> None:
+def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, mode: Optional[EngToIPAMode], consider_annotations: Optional[bool]) -> None:
   for utterance in utterances.items():
     new_symbols, new_format = symbols_to_ipa(
       symbols=utterance.symbols,
       lang=utterance.language,
       symbols_format=utterance.symbols_format,
       mode=mode,
-      consider_ipa_annotations=consider_ipa_annotations,
+      consider_annotations=consider_annotations,
     )
 
     utterance.symbols = new_symbols
@@ -143,7 +143,7 @@ def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: S
   clear_ipa_cache()
 
 
-def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool) -> None:
+def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool, build_n_thongs: bool) -> None:
   for utterance in utterances.items():
     new_symbols = change_ipa_method(
       symbols=utterance.symbols,
@@ -151,6 +151,7 @@ def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: Symbo
       ignore_arcs=ignore_arcs,
       ignore_stress=ignore_stress,
       break_n_thongs=break_n_thongs,
+      build_n_thongs=build_n_thongs,
     )
 
     utterance.symbols = new_symbols

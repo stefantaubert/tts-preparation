@@ -150,7 +150,7 @@ def normalize_text(base_dir: Path, merge_name: str, text_name: str) -> None:
   __check_for_unknown_symbols(utterances)
 
 
-def ipa_convert_text(base_dir: Path, merge_name: str, text_name: str, consider_ipa_annotations: bool = False, mode: Optional[EngToIPAMode] = None) -> None:
+def ipa_convert_text(base_dir: Path, merge_name: str, text_name: str, consider_annotations: bool = False, mode: Optional[EngToIPAMode] = None) -> None:
   logger = getLogger(__name__)
   merge_dir = get_merged_dir(base_dir, merge_name)
   text_dir = get_text_dir(merge_dir, text_name)
@@ -163,7 +163,7 @@ def ipa_convert_text(base_dir: Path, merge_name: str, text_name: str, consider_i
   utterances_convert_to_ipa(
     utterances=utterances,
     symbol_id_dict=load_merged_symbol_converter(merge_dir),
-    consider_ipa_annotations=consider_ipa_annotations,
+    consider_annotations=consider_annotations,
     mode=mode,
   )
 
@@ -176,7 +176,7 @@ def ipa_convert_text(base_dir: Path, merge_name: str, text_name: str, consider_i
   __check_for_unknown_symbols(utterances)
 
 
-def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool) -> None:
+def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool, build_n_thongs: bool) -> None:
   logger = getLogger(__name__)
   merge_dir = get_merged_dir(base_dir, merge_name)
   text_dir = get_text_dir(merge_dir, text_name)
@@ -193,6 +193,7 @@ def change_ipa_text(base_dir: Path, merge_name: str, text_name: str, ignore_tone
     ignore_stress=ignore_stress,
     ignore_tones=ignore_tones,
     break_n_thongs=break_n_thongs,
+    build_n_thongs=build_n_thongs,
   )
 
   text_dir = get_text_dir(merge_dir, text_name)

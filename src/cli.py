@@ -298,7 +298,7 @@ def init_normalize_text_parser(parser: ArgumentParser) -> None:
 def init_convert_to_ipa_text_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--text_name', type=str, required=True)
-  parser.add_argument('--consider_ipa_annotations', action='store_true')
+  parser.add_argument('--consider_annotations', action='store_true')
   parser.add_argument('--mode', choices=EngToIPAMode,
                       type=EngToIPAMode.__getitem__)
   return ipa_convert_text
@@ -311,6 +311,7 @@ def init_change_ipa_text_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--ignore_arcs', action='store_true')
   parser.add_argument('--ignore_stress', action='store_true')
   parser.add_argument('--break_n_thongs', action='store_true')
+  parser.add_argument('--build_n_thongs', action='store_true')
   return change_ipa_text
 
 
