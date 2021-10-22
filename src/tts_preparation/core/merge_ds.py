@@ -137,7 +137,7 @@ def map_final_ds_entry_to_prepared_data_entry(entry: FinalDsEntry, entry_id: Ent
   prep_entry = PreparedData(
     entry_id=entry_id,
     ds_entry_id=entry.entry_id,
-    identifier=entry.identifier,
+    basename=entry.basename,
     mel_absolute_path=entry.mel_absolute_path,
     mel_n_channels=entry.mel_n_channels,
     speaker_gender=entry.speaker_gender,

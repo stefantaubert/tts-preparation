@@ -16,7 +16,7 @@ EntryId = int
 class PreparedData:
   entry_id: EntryId
   ds_entry_id: EntryId
-  identifier: str
+  basename: str
   speaker_id: SpeakerId
   speaker_name: Speaker
   speaker_gender: Gender
