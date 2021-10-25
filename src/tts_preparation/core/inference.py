@@ -144,7 +144,7 @@ def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: S
 
 
 def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool, build_n_thongs: bool) -> None:
-  for utterance in utterances.items():
+  for utterance in utterances.items(True):
     new_symbols = change_ipa_method(
       symbols=utterance.symbols,
       ignore_tones=ignore_tones,
@@ -152,6 +152,7 @@ def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: Symbo
       ignore_stress=ignore_stress,
       break_n_thongs=break_n_thongs,
       build_n_thongs=build_n_thongs,
+      language=utterance.language,
     )
 
     utterance.symbols = new_symbols
