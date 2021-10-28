@@ -9,11 +9,12 @@ from accent_analyser.core.word_probabilities import (ProbabilitiesDict,
                                                      replace_with_prob)
 from general_utils import GenericList, console_out_len
 from sentence2pronunciation import sentence2pronunciation
+from sentence2pronunciation.lookup_cache import get_empty_cache
 from text_utils import (EngToIPAMode, Language, Symbol, SymbolFormat,
                         SymbolIdDict, SymbolIds, Symbols, SymbolsMap)
 from text_utils import change_ipa as change_ipa_method
-from text_utils import (clear_ipa_cache, symbols_to_ipa, symbols_to_sentences,
-                        text_normalize, text_to_symbols)
+from text_utils import (symbols_to_ipa, symbols_to_sentences, text_normalize,
+                        text_to_symbols)
 from text_utils.text import change_symbols
 
 
@@ -127,6 +128,7 @@ def utterances_normalize(utterances: InferableUtterances, symbol_id_dict: Symbol
 
 
 def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, mode: Optional[EngToIPAMode], consider_annotations: Optional[bool]) -> None:
+  cache = get_empty_cache()
   for utterance in utterances.items():
     new_symbols, new_format = symbols_to_ipa(
       symbols=utterance.symbols,
@@ -134,13 +136,12 @@ def utterances_convert_to_ipa(utterances: InferableUtterances, symbol_id_dict: S
       symbols_format=utterance.symbols_format,
       mode=mode,
       consider_annotations=consider_annotations,
+      cache=cache,
     )
 
     utterance.symbols = new_symbols
     utterance.symbols_format = new_format
     utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
-
-  clear_ipa_cache()
 
 
 def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, ignore_tones: bool, ignore_arcs: bool, ignore_stress: bool, break_n_thongs: bool, build_n_thongs: bool) -> None:
