@@ -267,7 +267,8 @@ def add_greedy_kld_ngram_seconds(existing_set: PreparedDataList, restset: Prepar
 def __add_greedy_kld_ngram_seconds(speaker_available: PreparedDataList, speaker_existing: PreparedDataList, n_gram: int, ignore_symbols: Optional[Set[str]], seconds: float) -> OrderedSet[EntryId]:
   speaker_available_dict = prep_data_list_to_dict_with_symbols(speaker_available)
   speaker_avail_durations = prep_data_list_to_dict_with_durations_s(speaker_available)
-  return greedy_kld_uniform_ngrams_seconds(speaker_available_dict, n_gram, ignore_symbols, speaker_avail_durations, seconds)
+  print(f"Ignored: {' '.join(sorted(ignore_symbols))}")
+  return greedy_kld_uniform_ngrams_seconds(speaker_available_dict, n_gram, ignore_symbols, speaker_avail_durations, seconds, 16, None, 500)
 
 
 def core_process_stats(onegram_stats: pd.DataFrame, twogram_stats: pd.DataFrame, threegram_stats: pd.DataFrame, speaker_stats: pd.DataFrame, ds: DatasetType) -> None:

@@ -485,7 +485,7 @@ def app_add_greedy_ngram_epochs(base_dir: Path, merge_name: str, orig_prep_name:
   )
 
 
-def app_add_greedy_kld_ngram_minutes(base_dir: Path, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, minutes: float, ignore_symbols: Optional[Set[Symbol]] = None, overwrite: bool = True) -> None:
+def app_add_greedy_kld_ngram_minutes(base_dir: Path, merge_name: str, orig_prep_name: str, dest_prep_name: str, dataset: DatasetType, n_gram: int, minutes: float, ignore_symbols: Set[Symbol], overwrite: bool) -> None:
   __add(
     base_dir=base_dir,
     merge_name=merge_name,

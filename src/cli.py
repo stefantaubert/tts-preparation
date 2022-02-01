@@ -21,6 +21,7 @@ from tts_preparation.app import (add_text, app_add_greedy_kld_ngram_minutes,
                                  ds_filter_symbols, ipa_convert_text, map_text,
                                  merge_ds, normalize_text,
                                  print_and_save_stats, split_text)
+from tts_preparation.app.export import export_audios
 from tts_preparation.app.inference import change_text
 from tts_preparation.core import DatasetType
 
@@ -184,15 +185,25 @@ def init_prepare_ds_add_ngrams_kld_minutes_parser(parser: ArgumentParser) -> Non
   parser.add_argument('--dataset', choices=DatasetType,
                       type=DatasetType.__getitem__)
   parser.add_argument('--n_gram', type=int, required=True)
-  parser.add_argument('--ignore_symbols', type=str)
+  parser.add_argument('--ignore_symbols', type=str, nargs="*", default=[])
   parser.add_argument('--minutes', type=float, required=True)
   parser.set_defaults(overwrite=True)
   return app_add_ngram_greedy_kld_minutes_cli
 
 
 def app_add_ngram_greedy_kld_minutes_cli(**args) -> None:
-  args["ignore_symbols"] = split_str_set_symbols(args["ignore_symbols"])
+  args["ignore_symbols"] = set(args["ignore_symbols"])
   app_add_greedy_kld_ngram_minutes(**args)
+
+
+def init_export_audios_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--dataset', choices=DatasetType,
+                      type=DatasetType.__getitem__)
+  parser.add_argument('--output-directory', type=Path, required=True)
+  parser.add_argument('--overwrite', action='store_true')
+  return export_audios
 
 
 def init_prepare_ds_add_symbols_parser(parser: ArgumentParser) -> None:
@@ -378,6 +389,8 @@ def _init_parser():
   _add_parser_to(subparsers, "inference-text-apply-mapping-table", init_apply_mapping_table_parser)
   _add_parser_to(subparsers, "inference-create-map", init_create_or_update_inference_map_parser)
   _add_parser_to(subparsers, "merged-ds-weights-map", init_create_or_update_weights_map_parser)
+
+  _add_parser_to(subparsers, "export-audio", init_export_audios_parser)
 
   return result
 
