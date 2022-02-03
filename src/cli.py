@@ -21,7 +21,9 @@ from tts_preparation.app import (add_text, app_add_greedy_kld_ngram_minutes,
                                  ds_filter_symbols, ipa_convert_text, map_text,
                                  merge_ds, normalize_text,
                                  print_and_save_stats, split_text)
-from tts_preparation.app.export import export_audios
+from tts_preparation.app.export import (export_audios,
+                                        export_for_text_selection,
+                                        import_from_selection)
 from tts_preparation.app.inference import change_text
 from tts_preparation.core import DatasetType
 
@@ -204,6 +206,21 @@ def init_export_audios_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--output-directory', type=Path, required=True)
   parser.add_argument('--overwrite', action='store_true')
   return export_audios
+
+
+def init_export_for_text_selection_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--output-directory', type=Path, required=True)
+  parser.add_argument('--overwrite', action='store_true')
+  return export_for_text_selection
+
+
+def init_import_from_selection_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--prep_name', type=str, required=True)
+  parser.add_argument('--import-directory', type=Path, required=True)
+  return import_from_selection
 
 
 def init_prepare_ds_add_symbols_parser(parser: ArgumentParser) -> None:
@@ -391,6 +408,8 @@ def _init_parser():
   _add_parser_to(subparsers, "merged-ds-weights-map", init_create_or_update_weights_map_parser)
 
   _add_parser_to(subparsers, "export-audio", init_export_audios_parser)
+  _add_parser_to(subparsers, "export-for-selection", init_export_for_text_selection_parser)
+  _add_parser_to(subparsers, "import-from-selection", init_import_from_selection_parser)
 
   return result
 

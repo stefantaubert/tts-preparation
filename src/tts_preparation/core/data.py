@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
-from typing import Dict, Set
+from typing import Dict, Generator, Set
 
 from general_utils import GenericList
 from text_utils.gender import Gender
@@ -66,6 +66,11 @@ class PreparedDataList(GenericList[PreparedData]):
     durations = [entry.wav_duration for entry in self.items()]
     total_duration = sum(durations)
     return total_duration
+
+
+def get_entry_ids(data: PreparedDataList) -> Generator[EntryId, None, None]:
+  ids = (entry.entry_id for entry in data.items())
+  return ids
 
 
 def get_speaker_wise(data: PreparedDataList) -> Dict[Speaker, PreparedDataList]:
