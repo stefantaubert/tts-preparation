@@ -5,7 +5,7 @@ from shutil import copy2, rmtree
 
 from ordered_set import OrderedSet
 from text_selection_api import Dataset, create, get_selection
-from text_utils import StringFormat2
+from text_utils import StringFormat, StringFormat2
 from tts_preparation.app.io import get_merged_dir
 from tts_preparation.app.prepare import (get_prep_dir, load_restset, load_set,
                                          load_testset, load_totalset,
@@ -37,7 +37,7 @@ def export_audios(base_dir: Path, merge_name: str, prep_name: str, dataset: Data
     assert entry.wav_absolute_path.is_file()
     output_wav_path = output_directory / f"{entry.entry_id}.wav"
     output_text_path = output_directory / f"{entry.entry_id}.txt"
-    text = StringFormat2.SPACED.convert_symbols_to_string(entry.symbols)
+    text = StringFormat.SYMBOLS.convert_symbols_to_string(entry.symbols)
 
     copy2(entry.wav_absolute_path, output_wav_path, follow_symlinks=False)
     output_text_path.write_text(text, encoding="UTF-8")
