@@ -1,6 +1,11 @@
+from logging import getLogger
+import logging
 import os
 from argparse import ArgumentParser
 from pathlib import Path
+import re
+import sys
+from typing import List
 
 from general_utils import parse_tuple_list, split_str_set_symbols
 from text_utils import EngToIPAMode, Language, SymbolFormat
@@ -414,15 +419,40 @@ def _init_parser():
   return result
 
 
-def _process_args(args) -> None:
-  params = vars(args)
+def configure_logger() -> None:
+  loglevel = logging.DEBUG if __debug__ else logging.INFO
+  main_logger = getLogger()
+  main_logger.setLevel(loglevel)
+  main_logger.manager.disable = logging.NOTSET
+  if len(main_logger.handlers) > 0:
+    console = main_logger.handlers[0]
+  else:
+    console = logging.StreamHandler()
+    main_logger.addHandler(console)
+
+  logging_formatter = logging.Formatter(
+    '[%(asctime)s.%(msecs)03d] (%(levelname)s) %(message)s',
+    '%Y/%m/%d %H:%M:%S',
+  )
+  console.setFormatter(logging_formatter)
+  console.setLevel(loglevel)
+
+
+def parse_args(args: List[str]):
+  configure_logger()
+  logger = getLogger(__name__)
+  if BASE_DIR_VAR in os.environ:
+    logger.debug(f"base_dir: {os.environ[BASE_DIR_VAR]}")
+  logger.debug(f"Received args: {str(args)}")
+
+  parser = _init_parser()
+  received_args = parser.parse_args(args)
+
+  params = vars(received_args)
   invoke_handler = params.pop("invoke_handler")
   invoke_handler(**params)
 
 
 if __name__ == "__main__":
-  main_parser = _init_parser()
-
-  received_args = main_parser.parse_args()
-
-  _process_args(received_args)
+  arguments = sys.argv[1:]
+  parse_args(arguments)

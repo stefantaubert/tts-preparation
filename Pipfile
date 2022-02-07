@@ -29,7 +29,6 @@ general-utils = {editable = true, path = "./../general-utils"}
 pandas = "*"
 tqdm = "*"
 numpy = "*"
-Unidecode = "*"
 
 [requires]
 python_version = "3.8"
