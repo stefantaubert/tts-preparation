@@ -75,8 +75,8 @@ def export_for_text_selection(base_dir: Path, merge_name: str, prep_name: str, o
 
   dataset = Dataset(all_ids)
   dataset.subsets["trn"] = trn_ids
-  dataset.subsets["tst"] = tst_ids
   dataset.subsets["val"] = val_ids
+  dataset.subsets["tst"] = tst_ids
   dataset.subsets["rst"] = rst_ids
 
   durations = ((entry.entry_id, entry.wav_duration) for entry in totalset.items())
@@ -108,8 +108,8 @@ def import_from_selection(base_dir: Path, merge_name: str, prep_name: str, impor
 
   try:
     trn_selection = get_selection(import_directory, "trn")
-    tst_selection = get_selection(import_directory, "tst")
     val_selection = get_selection(import_directory, "val")
+    tst_selection = get_selection(import_directory, "tst")
     rst_selection = get_selection(import_directory, "rst")
   except ValueError as error:
     logger.error(error)
