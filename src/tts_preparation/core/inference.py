@@ -1,3 +1,4 @@
+from text_utils import StringFormat2
 import random
 import string
 from dataclasses import dataclass
@@ -68,13 +69,22 @@ def log_utterances(utterances: InferableUtterances, marker: Symbol) -> None:
     log_utterance(utterance, marker)
 
 
-def add_utterances_from_text(text: str, language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict) -> InferableUtterances:
+def add_utterances_from_text(text: str, language: Language, text_format: SymbolFormat, symbol_id_dict: SymbolIdDict, string_format: StringFormat2) -> InferableUtterances:
   new_utterances = InferableUtterances()
   # each non-empty line is regarded as one utterance.
   lines = text.split("\n")
   non_empty_lines = [line for line in lines if line != ""]
   for line_nr, line in enumerate(non_empty_lines, start=1):
-    symbols = text_to_symbols(line, text_format, language)
+    if not string_format.can_convert_string_to_symbols(line):
+      logger = getLogger(__name__)
+      logger.error(f"Line could not be parsed! Line: '{line}'. Skipped.")
+      continue
+
+    if string_format == StringFormat2.DEFAULT:
+      symbols = text_to_symbols(line, text_format, language)
+    elif string_format == StringFormat2.SPACED:
+      symbols = string_format.convert_string_to_symbols(line)
+
     utterance = InferableUtterance(
       utterance_id=line_nr,
       language=language,
@@ -158,6 +168,20 @@ def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: Symbo
 
     utterance.symbols = new_symbols
     utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
+
+
+def utterances_convert_to_string(utterances: InferableUtterances, string_format: StringFormat2) -> str:
+  lines = []
+  for utterance in utterances.items():
+    if not string_format.can_convert_symbols_to_string(utterance.symbols):
+      logger = getLogger(__name__)
+      logger.error(
+        f"Utterance could not be exported! Utterance: '{''.join(utterance.symbols)}'. Skipped.")
+      continue
+    line = string_format.convert_symbols_to_string(utterance.symbols)
+    lines.append(line)
+  result = '\n'.join(lines)
+  return result
 
 
 def utterances_change_text(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict, remove_space_around_punctuation: bool) -> None:

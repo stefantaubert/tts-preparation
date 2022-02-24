@@ -1,3 +1,6 @@
+from text_utils import StringFormat2
+from collections import OrderedDict
+from pronunciation_dict_parser import PublicDictType
 from logging import getLogger
 import logging
 import os
@@ -29,7 +32,7 @@ from tts_preparation.app import (add_text, app_add_greedy_kld_ngram_minutes,
 from tts_preparation.app.export import (export_audios,
                                         export_for_text_selection,
                                         import_from_selection)
-from tts_preparation.app.inference import change_text
+from tts_preparation.app.inference import arpa_convert_text, change_text, export_text
 from tts_preparation.core import DatasetType
 
 BASE_DIR_VAR = "base_dir"
@@ -313,6 +316,8 @@ def init_add_text_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--language', choices=Language, type=Language.__getitem__, required=True)
   parser.add_argument('--text_format', choices=SymbolFormat,
                       type=SymbolFormat.__getitem__, required=True)
+  parser.add_argument('--string_format', choices=StringFormat2,
+                      type=StringFormat2.__getitem__, required=True)
   return add_text
 
 
@@ -320,6 +325,14 @@ def init_split_text_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--text_name', type=str, required=True)
   return split_text
+
+
+def init_export_text_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  parser.add_argument('--string_format', choices=StringFormat2,
+                      type=StringFormat2.__getitem__, default=StringFormat2.SPACED)
+  return export_text
 
 
 def init_normalize_text_parser(parser: ArgumentParser) -> None:
@@ -335,6 +348,38 @@ def init_convert_to_ipa_text_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--mode', choices=EngToIPAMode,
                       type=EngToIPAMode.__getitem__)
   return ipa_convert_text
+
+
+def init_convert_to_arpa_text_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  parser.add_argument('--consider_annotations', action='store_true')
+  parser.set_defaults(dictionary=PublicDictType.MFA_ARPA)
+  return arpa_convert_text
+
+
+def add_dictionary_argument(parser: ArgumentParser) -> None:
+  names = OrderedDict((
+    (PublicDictType.MFA_ARPA, "MFA"),
+    (PublicDictType.CMU_ARPA, "CMU"),
+    (PublicDictType.LIBRISPEECH_ARPA, "LibriSpeech"),
+    (PublicDictType.PROSODYLAB_ARPA, "Prosodylab"),
+  ))
+
+  values_to_names = dict(zip(
+    names.values(),
+    names.keys()
+  ))
+
+  help_str = "pronunciation dictionary (ARPAbet) which should be used to look up the words; if a pronunciation is not available it will be estimated"
+  parser.add_argument(
+    "-d", "--dictionary",
+    metavar=list(names.values()),
+    choices=names.keys(),
+    type=values_to_names.get,
+    default=names[PublicDictType.MFA_ARPA],
+    help=help_str,
+  )
 
 
 def init_change_ipa_text_parser(parser: ArgumentParser) -> None:
@@ -405,11 +450,13 @@ def _init_parser():
   _add_parser_to(subparsers, "inference-text-split", init_split_text_parser)
   _add_parser_to(subparsers, "inference-text-normalize", init_normalize_text_parser)
   _add_parser_to(subparsers, "inference-text-change-text", init_change_text_parser)
+  _add_parser_to(subparsers, "inference-text-to-arpa", init_convert_to_arpa_text_parser)
   _add_parser_to(subparsers, "inference-text-to-ipa", init_convert_to_ipa_text_parser)
   _add_parser_to(subparsers, "inference-text-change-ipa", init_change_ipa_text_parser)
   _add_parser_to(subparsers, "inference-text-map", init_map_text_parser)
   _add_parser_to(subparsers, "inference-text-apply-mapping-table", init_apply_mapping_table_parser)
   _add_parser_to(subparsers, "inference-create-map", init_create_or_update_inference_map_parser)
+  _add_parser_to(subparsers, "inference-text-export", init_export_text_parser)
   _add_parser_to(subparsers, "merged-ds-weights-map", init_create_or_update_weights_map_parser)
 
   _add_parser_to(subparsers, "export-audio", init_export_audios_parser)
