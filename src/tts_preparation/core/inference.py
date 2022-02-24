@@ -100,12 +100,14 @@ def utterances_split(utterances: InferableUtterances, symbol_id_dict: SymbolIdDi
   new_utterances = InferableUtterances()
   counter = 1
   for utterance in utterances.items():
+    print(utterance)
     sentences = symbols_to_sentences(
       symbols=utterance.symbols,
       symbols_format=utterance.symbols_format,
       lang=utterance.language,
     )
-
+    print(sentences)
+    
     for sentence_symbols in sentences:
       utterance = InferableUtterance(
         utterance_id=counter,

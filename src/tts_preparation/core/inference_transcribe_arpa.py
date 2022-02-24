@@ -9,7 +9,7 @@ from pronunciation_dict_parser import (Pronunciation, PronunciationDict,
 from sentence2pronunciation import sentences2pronunciations_from_cache_mp, sentence2pronunciation
 from sentence2pronunciation.lookup_cache import LookupCache
 from sentence2pronunciation.multiprocessing import prepare_cache_mp
-from text_utils import StringFormat, Symbol, Symbols, symbols_to_upper, SymbolIdDict
+from text_utils import StringFormat, Symbol, Symbols, symbols_to_upper, SymbolIdDict, SymbolFormat
 from text_utils.utils import (pronunciation_dict_to_tuple_dict, symbols_ignore,
                               symbols_split)
 from textgrid import Interval, IntervalTier, TextGrid
@@ -43,6 +43,7 @@ def transcribe_to_arpa(utterances: InferableUtterances, symbol_id_dict: SymbolId
     )
 
     utterance.symbols = new_symbols
+    utterance.symbols_format = SymbolFormat.PHONEMES_ARPA
     utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
 
   logger.debug("Done.")
