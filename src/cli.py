@@ -32,7 +32,7 @@ from tts_preparation.app import (add_text, app_add_greedy_kld_ngram_minutes,
 from tts_preparation.app.export import (export_audios,
                                         export_for_text_selection,
                                         import_from_selection)
-from tts_preparation.app.inference import arpa_convert_text, change_text, export_text
+from tts_preparation.app.inference import arpa_convert_text, change_text, export_text, map_arpa_to_ipa
 from tts_preparation.core import DatasetType
 
 BASE_DIR_VAR = "base_dir"
@@ -393,6 +393,12 @@ def init_change_ipa_text_parser(parser: ArgumentParser) -> None:
   return change_ipa_text
 
 
+def init_map_arpa_to_ipa_parser(parser: ArgumentParser) -> None:
+  parser.add_argument('--merge_name', type=str, required=True)
+  parser.add_argument('--text_name', type=str, required=True)
+  return map_arpa_to_ipa
+
+
 def init_change_text_parser(parser: ArgumentParser) -> None:
   parser.add_argument('--merge_name', type=str, required=True)
   parser.add_argument('--text_name', type=str, required=True)
@@ -454,6 +460,7 @@ def _init_parser():
   _add_parser_to(subparsers, "inference-text-to-ipa", init_convert_to_ipa_text_parser)
   _add_parser_to(subparsers, "inference-text-change-ipa", init_change_ipa_text_parser)
   _add_parser_to(subparsers, "inference-text-map", init_map_text_parser)
+  _add_parser_to(subparsers, "inference-text-arpa-to-ipa", init_map_arpa_to_ipa_parser)
   _add_parser_to(subparsers, "inference-text-apply-mapping-table", init_apply_mapping_table_parser)
   _add_parser_to(subparsers, "inference-create-map", init_create_or_update_inference_map_parser)
   _add_parser_to(subparsers, "inference-text-export", init_export_text_parser)

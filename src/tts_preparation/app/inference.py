@@ -18,7 +18,7 @@ from tts_preparation.core.inference import (InferableUtterances,
                                             utterances_apply_symbols_map,
                                             utterances_change_ipa,
                                             utterances_change_text,
-                                            utterances_convert_to_ipa, utterances_convert_to_string,
+                                            utterances_convert_to_ipa, utterances_convert_to_string, utterances_map_from_arpa_to_ipa,
                                             utterances_normalize,
                                             utterances_split)
 from tts_preparation.core.inference_transcribe_arpa import transcribe_to_arpa
@@ -270,6 +270,30 @@ def change_text(base_dir: Path, merge_name: str, text_name: str, remove_space_ar
     utterances=utterances,
     symbol_id_dict=load_merged_symbol_converter(merge_dir),
     remove_space_around_punctuation=remove_space_around_punctuation,
+  )
+
+  text_dir = get_text_dir(merge_dir, text_name)
+  text_dir.mkdir(parents=True, exist_ok=True)
+  __save_utterances(text_dir, utterances)
+  __save_utterances_txt(text_dir, utterances)
+
+  log_utterances(utterances, marker=NOT_INFERABLE_SYMBOL_MARKER)
+  __check_for_unknown_symbols(utterances)
+
+
+def map_arpa_to_ipa(base_dir: Path, merge_name: str, text_name: str) -> None:
+  logger = getLogger(__name__)
+  merge_dir = get_merged_dir(base_dir, merge_name)
+  text_dir = get_text_dir(merge_dir, text_name)
+  if not text_dir.is_dir():
+    logger.error("Please add text first.")
+    return
+
+  logger.info("Changing content...")
+  utterances = load_utterances(text_dir)
+  utterances_map_from_arpa_to_ipa(
+    utterances=utterances,
+    symbol_id_dict=load_merged_symbol_converter(merge_dir),
   )
 
   text_dir = get_text_dir(merge_dir, text_name)

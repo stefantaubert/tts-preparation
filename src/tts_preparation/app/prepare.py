@@ -1,7 +1,7 @@
 import shutil
 from logging import getLogger
 from pathlib import Path
-from statistics import mean
+from numpy import mean
 from typing import Callable, Optional, Set, Tuple
 
 import pandas as pd

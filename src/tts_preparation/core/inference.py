@@ -1,3 +1,4 @@
+from text_utils import symbols_map_arpa_to_ipa
 from text_utils import StringFormat2
 import random
 import string
@@ -107,7 +108,7 @@ def utterances_split(utterances: InferableUtterances, symbol_id_dict: SymbolIdDi
       lang=utterance.language,
     )
     print(sentences)
-    
+
     for sentence_symbols in sentences:
       utterance = InferableUtterance(
         utterance_id=counter,
@@ -166,6 +167,19 @@ def utterances_change_ipa(utterances: InferableUtterances, symbol_id_dict: Symbo
       break_n_thongs=break_n_thongs,
       build_n_thongs=build_n_thongs,
       language=utterance.language,
+    )
+
+    utterance.symbols = new_symbols
+    utterance.symbol_ids = symbol_id_dict.get_ids(new_symbols)
+
+
+def utterances_map_from_arpa_to_ipa(utterances: InferableUtterances, symbol_id_dict: SymbolIdDict) -> None:
+  for utterance in utterances.items(True):
+    new_symbols = symbols_map_arpa_to_ipa(
+      arpa_symbols=utterance.symbols,
+      ignore={},
+      replace_unknown=False,
+      replace_unknown_with=None,
     )
 
     utterance.symbols = new_symbols
