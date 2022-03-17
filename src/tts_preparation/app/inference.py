@@ -11,7 +11,7 @@ from text_utils import EngToIPAMode, Language, Symbol, SymbolFormat, SymbolsMap
 from tts_preparation.app.io import (get_infer_map_path, get_merged_dir,
                                     infer_map_exists)
 from tts_preparation.app.merge_ds import load_merged_symbol_converter
-from tts_preparation.core.inference import (InferableUtterances,
+from tts_preparation.core.inference import (InferableUtterances, SYMBOL_STR_SEP,
                                             add_utterances_from_text,
                                             get_utterances_txt, log_utterances,
                                             utterances_apply_mapping_table,
